@@ -5,7 +5,7 @@ import { getProjects } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
 import { ProjectManager } from "@/components/projects/project-manager";
 
-export const metadata: Metadata = { title: "Proyectos · Kanbo" };
+export const metadata: Metadata = { title: "Proyectos" };
 
 export default async function ProjectsPage() {
   await requireAdmin();

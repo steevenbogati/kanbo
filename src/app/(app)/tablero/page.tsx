@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { Board } from "@/components/tasks/board";
 import { NewTaskButton } from "@/components/tasks/new-task-button";
 
-export const metadata: Metadata = { title: "Tablero · Kanbo" };
+export const metadata: Metadata = { title: "Tablero" };
 
 export default async function BoardPage() {
   const { isAdmin } = await requireSession();
@@ -16,11 +16,7 @@ export default async function BoardPage() {
     <>
       <PageHeader
         title="Tablero"
-        subtitle={
-          isAdmin
-            ? "Arrastra las tarjetas para cambiar el estado. En el celular usa el menú de cada tarjeta."
-            : "Aquí ves tus tareas. Arrastra para cambiar el estado."
-        }
+        subtitle="Arrastra una tarjeta para cambiarle el estado. En el celular, mantén el dedo un momento y luego mueve, o usa el menú de la tarjeta."
         action={<NewTaskButton team={team} projects={projects} isAdmin={isAdmin} />}
       />
 

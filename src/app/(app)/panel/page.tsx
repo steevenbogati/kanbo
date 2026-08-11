@@ -1,24 +1,73 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArrowRight, CalendarClock, CheckCircle2, Inbox, TriangleAlert, Users } from "lucide-react";
 
 import { requireAdmin } from "@/lib/auth";
 import { getTasks, getWorkload } from "@/lib/queries";
 import { daysAgoISO, formatDays, todayISO } from "@/lib/dates";
-import { ROLE_LABEL, STATUS_LABEL } from "@/lib/labels";
+import { ROLE_LABEL, STATUS_DOT, STATUS_LABEL } from "@/lib/labels";
+import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/empty-state";
+import { Avatar } from "@/components/user-menu";
 
-export const metadata: Metadata = { title: "Panel · Kanbo" };
+export const metadata: Metadata = { title: "Panel" };
 
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+/**
+ * Stat tile: label, value, and an optional note. The value keeps proportional
+ * figures (tabular-nums would look loose at this size); only the columns of
+ * numbers further down use `nums`.
+ */
+function Stat({
+  label,
+  value,
+  note,
+  icon: Icon,
+  tone = "neutral",
+}: {
+  label: string;
+  value: number;
+  note?: string;
+  icon: typeof Inbox;
+  tone?: "neutral" | "warning" | "danger" | "good";
+}) {
+  const accent = {
+    neutral: "text-muted-foreground",
+    warning: "text-medium",
+    danger: "text-high",
+    good: "text-done",
+  }[tone];
+
   return (
-    <Card>
-      <CardContent className="py-4">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
-        {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
-      </CardContent>
-    </Card>
+    <article className="rounded-xl border bg-card p-4 shadow-xs">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[12px] font-medium text-muted-foreground">{label}</p>
+        <Icon className={cn("size-4 shrink-0", accent)} />
+      </div>
+      <p
+        className={cn(
+          "mt-2 text-[28px] font-semibold leading-none tracking-tight",
+          value > 0 && (tone === "danger" || tone === "warning") ? accent : "text-foreground",
+        )}
+      >
+        {value}
+      </p>
+      {note && <p className="mt-1.5 text-[12px] text-muted-foreground">{note}</p>}
+    </article>
+  );
+}
+
+/** Meter: severity in the fill, lighter step of the same ramp in the track. */
+function Meter({ value, max, tone }: { value: number; max: number; tone: "accent" | "danger" }) {
+  const pct = max > 0 ? Math.max(value > 0 ? 6 : 0, Math.round((value / max) * 100)) : 0;
+
+  return (
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-track" aria-hidden>
+      <div
+        className={cn("h-full rounded-full", tone === "danger" ? "bg-high" : "bg-primary")}
+        style={{ width: `${pct}%` }}
+      />
+    </div>
   );
 }
 
@@ -48,105 +97,154 @@ export default async function DashboardPage() {
     count: open.filter((task) => task.status === status).length,
   }));
 
+  const busiest = Math.max(1, ...workload.map((person) => person.open_tasks));
+
   return (
     <>
       <PageHeader title="Panel" subtitle="Cómo va el equipo ahora mismo." />
 
       <div className="space-y-6">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Stat label="Tareas abiertas" value={String(open.length)} />
+        <section aria-label="Resumen" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <Stat label="Tareas abiertas" value={open.length} icon={Inbox} />
           <Stat
             label="Vencidas"
-            value={String(overdue.length)}
-            hint={overdue.length > 0 ? "Necesitan atención" : "Todo al día"}
+            value={overdue.length}
+            icon={TriangleAlert}
+            tone="danger"
+            note={overdue.length > 0 ? "Necesitan atención" : "Todo al día"}
           />
-          <Stat label="Vencen hoy" value={String(dueToday.length)} />
+          <Stat label="Vencen hoy" value={dueToday.length} icon={CalendarClock} tone="warning" />
           <Stat
             label="Entregadas esta semana"
-            value={String(deliveredThisWeek.length)}
-            hint={average !== null ? `Promedio: ${formatDays(average)}` : undefined}
+            value={deliveredThisWeek.length}
+            icon={CheckCircle2}
+            tone="good"
+            note={average !== null ? `Promedio general: ${formatDays(average)}` : undefined}
           />
-        </div>
+        </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Carga por persona</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {workload.map((person) => (
-              <div key={person.profile_id} className="rounded-lg border p-3">
-                <div className="flex flex-wrap items-baseline justify-between gap-x-2">
-                  <p className="font-medium">{person.full_name || person.email}</p>
-                  <p className="text-xs text-muted-foreground">{ROLE_LABEL[person.role]}</p>
-                </div>
-                <dl className="mt-2 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
-                  <div>
-                    <dt className="text-xs text-muted-foreground">Abiertas</dt>
-                    <dd className="tabular-nums">{person.open_tasks}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-muted-foreground">En progreso</dt>
-                    <dd className="tabular-nums">{person.in_progress_tasks}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-muted-foreground">Vencidas</dt>
-                    <dd
-                      className={
-                        person.overdue_tasks > 0
-                          ? "tabular-nums text-red-600 dark:text-red-400"
-                          : "tabular-nums"
-                      }
-                    >
-                      {person.overdue_tasks}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-muted-foreground">Entrega promedio</dt>
-                    <dd className="tabular-nums">{formatDays(person.avg_duration_days)}</dd>
-                  </div>
-                </dl>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Entregadas en los últimos 7 días: {person.done_last_7_days}
-                </p>
+        <div className="grid gap-4 lg:grid-cols-[1fr_320px] lg:items-start">
+          <section className="rounded-xl border bg-card shadow-xs">
+            <header className="flex items-center gap-2 border-b px-4 py-3">
+              <Users className="size-4 text-muted-foreground" />
+              <h2 className="text-[13px] font-semibold tracking-tight">Carga por persona</h2>
+              <p className="ml-auto text-[11px] text-muted-foreground">
+                La barra compara contra quien tiene más carga
+              </p>
+            </header>
+
+            <div className="p-4">
+              {workload.length === 0 ? (
+                <EmptyState
+                  compact
+                  icon={Users}
+                  title="Todavía no hay gente activa"
+                  hint="Crea las cuentas del equipo para ver su carga aquí."
+                />
+              ) : (
+                <ul className="divide-y">
+                  {workload.map((person) => (
+                    <li key={person.profile_id} className="py-3.5 first:pt-0 last:pb-0">
+                      <div className="flex items-center gap-3">
+                        <Avatar name={person.full_name} fallback={person.username} />
+
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[14px] font-semibold leading-tight">
+                            {person.full_name || person.username}
+                          </p>
+                          <p className="truncate text-[11px] text-muted-foreground">
+                            @{person.username} · {ROLE_LABEL[person.role]}
+                          </p>
+                        </div>
+
+                        {person.overdue_tasks > 0 && (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-high-soft px-1.5 py-0.5 text-[11px] font-semibold text-high">
+                            <TriangleAlert className="size-3" />
+                            <span className="nums">{person.overdue_tasks}</span> vencida
+                            {person.overdue_tasks === 1 ? "" : "s"}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="mt-2.5 pl-11">
+                        <Meter
+                          value={person.open_tasks}
+                          max={busiest}
+                          tone={person.overdue_tasks > 0 ? "danger" : "accent"}
+                        />
+
+                        <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[12px] sm:grid-cols-4">
+                          <div className="flex justify-between gap-2 sm:block">
+                            <dt className="text-muted-foreground">Abiertas</dt>
+                            <dd className="nums font-semibold">{person.open_tasks}</dd>
+                          </div>
+                          <div className="flex justify-between gap-2 sm:block">
+                            <dt className="text-muted-foreground">En progreso</dt>
+                            <dd className="nums font-semibold">{person.in_progress_tasks}</dd>
+                          </div>
+                          <div className="flex justify-between gap-2 sm:block">
+                            <dt className="text-muted-foreground">Entregó (7 días)</dt>
+                            <dd className="nums font-semibold">{person.done_last_7_days}</dd>
+                          </div>
+                          <div className="flex justify-between gap-2 sm:block">
+                            <dt className="text-muted-foreground">Entrega promedio</dt>
+                            <dd className="nums font-semibold">
+                              {formatDays(person.avg_duration_days)}
+                            </dd>
+                          </div>
+                        </dl>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
+
+          <div className="space-y-4">
+            <section className="rounded-xl border bg-card shadow-xs">
+              <header className="border-b px-4 py-3">
+                <h2 className="text-[13px] font-semibold tracking-tight">Abiertas por estado</h2>
+              </header>
+              <ul className="px-4 py-2">
+                {byStatus.map((row) => (
+                  <li
+                    key={row.status}
+                    className="flex items-center gap-2.5 border-b py-2.5 text-[13px] last:border-0"
+                  >
+                    <span
+                      aria-hidden
+                      className={cn("size-2 shrink-0 rounded-full", STATUS_DOT[row.status])}
+                    />
+                    <span className="flex-1">{STATUS_LABEL[row.status]}</span>
+                    <span className="nums font-semibold">{row.count}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section className="rounded-xl border bg-card shadow-xs">
+              <header className="border-b px-4 py-3">
+                <h2 className="text-[13px] font-semibold tracking-tight">Atajos</h2>
+              </header>
+              <div className="flex flex-col px-2 py-2">
+                {[
+                  { href: "/lista?vencidas=1", label: "Ver todas las tareas vencidas" },
+                  { href: "/proyectos", label: "Administrar proyectos y clientes" },
+                  { href: "/tablero", label: "Ir al tablero" },
+                ].map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="group flex items-center gap-2 rounded-lg px-2 py-2.5 text-[13px] font-medium transition-colors duration-150 hover:bg-muted"
+                  >
+                    {link.label}
+                    <ArrowRight className="ml-auto size-4 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5" />
+                  </Link>
+                ))}
               </div>
-            ))}
-            {workload.length === 0 && (
-              <p className="text-sm text-muted-foreground">Todavía no hay gente activa.</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Abiertas por estado</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {byStatus.map((row) => (
-                <div key={row.status} className="flex items-center justify-between text-sm">
-                  <span>{STATUS_LABEL[row.status]}</span>
-                  <span className="tabular-nums">{row.count}</span>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Atajos</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <Link href="/lista?vencidas=1" className="block underline underline-offset-2">
-                Ver todas las tareas vencidas
-              </Link>
-              <Link href="/proyectos" className="block underline underline-offset-2">
-                Administrar proyectos y clientes
-              </Link>
-              <Link href="/tablero" className="block underline underline-offset-2">
-                Ir al tablero
-              </Link>
-            </CardContent>
-          </Card>
+            </section>
+          </div>
         </div>
       </div>
     </>
