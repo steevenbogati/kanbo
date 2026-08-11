@@ -185,6 +185,15 @@ git commit -m "Describe en una línea qué cambiaste"
 git push
 ```
 
+**La primera vez que hagas `git push`** en una computadora, Git te va a pedir permiso para
+entrar a GitHub: se abre una ventana del navegador, aceptas con tu cuenta y no vuelve a
+preguntar. Si esta computadora está guardada con otra cuenta de GitHub que no tiene acceso
+al repo, verás un error de *permiso denegado*; en ese caso agrega esa cuenta como
+colaboradora en GitHub → **Settings** → **Collaborators**.
+
+Nunca pegues un token de GitHub en un archivo del proyecto: si necesitas uno, Git lo guarda
+solo en el administrador de credenciales de Windows.
+
 Por ahora **no hay despliegue en internet**: la app se usa en local con `npm run dev`.
 
 ### Cuando quieras publicarla (10 minutos, sin tocar código)
