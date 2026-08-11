@@ -12,6 +12,11 @@ export function todayISO(): string {
   }).format(new Date());
 }
 
+/** ISO timestamp for "N days ago", used by the weekly counters. */
+export function daysAgoISO(days: number): string {
+  return new Date(Date.now() - days * 86_400_000).toISOString();
+}
+
 /** "12 mar" or "12 mar 2025" when the year is not the current one. */
 export function formatDate(iso: string | null): string {
   if (!iso) return "Sin fecha";

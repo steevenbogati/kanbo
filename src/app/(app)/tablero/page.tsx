@@ -1,22 +1,30 @@
 import type { Metadata } from "next";
 
 import { requireSession } from "@/lib/auth";
+import { getProjects, getTasks, getTeam } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
-import { Card, CardContent } from "@/components/ui/card";
+import { Board } from "@/components/tasks/board";
+import { NewTaskButton } from "@/components/tasks/new-task-button";
 
 export const metadata: Metadata = { title: "Tablero · Kanbo" };
 
 export default async function BoardPage() {
-  await requireSession();
+  const { isAdmin } = await requireSession();
+  const [tasks, team, projects] = await Promise.all([getTasks(), getTeam(), getProjects()]);
 
   return (
     <>
-      <PageHeader title="Tablero" subtitle="Arrastra las tarjetas para cambiar de estado." />
-      <Card>
-        <CardContent className="py-8 text-center text-sm text-muted-foreground">
-          Esta vista se construye en la Fase 2.
-        </CardContent>
-      </Card>
+      <PageHeader
+        title="Tablero"
+        subtitle={
+          isAdmin
+            ? "Arrastra las tarjetas para cambiar el estado. En el celular usa el menú de cada tarjeta."
+            : "Aquí ves tus tareas. Arrastra para cambiar el estado."
+        }
+        action={<NewTaskButton team={team} projects={projects} isAdmin={isAdmin} />}
+      />
+
+      <Board tasks={tasks} team={team} projects={projects} isAdmin={isAdmin} />
     </>
   );
 }

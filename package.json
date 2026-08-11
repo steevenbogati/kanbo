@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "crear-usuario": "node --env-file=.env.local scripts/create-user.mjs"
+    "crear-usuario": "node --env-file=.env.local scripts/create-user.mjs",
+    "recordatorios": "node --env-file=.env.local scripts/enviar-recordatorios.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

@@ -2,7 +2,7 @@
  * Navigation entries. Kept out of nav.tsx (a client component) so server
  * components can build the list too.
  */
-export type NavIcon = "mi-dia" | "tablero" | "lista" | "panel";
+export type NavIcon = "mi-dia" | "tablero" | "lista" | "panel" | "proyectos";
 
 export type NavItem = { href: string; label: string; icon: NavIcon };
 
@@ -12,6 +12,9 @@ export function navItems(isAdmin: boolean): NavItem[] {
     { href: "/tablero", label: "Tablero", icon: "tablero" },
     { href: "/lista", label: "Lista", icon: "lista" },
   ];
-  if (isAdmin) items.push({ href: "/panel", label: "Panel", icon: "panel" });
+  if (isAdmin) {
+    items.push({ href: "/panel", label: "Panel", icon: "panel" });
+    items.push({ href: "/proyectos", label: "Proyectos", icon: "proyectos" });
+  }
   return items;
 }

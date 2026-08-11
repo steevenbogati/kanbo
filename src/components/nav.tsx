@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarCheck, KanbanSquare, LayoutDashboard, List } from "lucide-react";
+import { CalendarCheck, FolderOpen, KanbanSquare, LayoutDashboard, List } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { NavIcon, NavItem } from "@/lib/nav-items";
@@ -12,6 +12,7 @@ const ICONS: Record<NavIcon, typeof List> = {
   tablero: KanbanSquare,
   lista: List,
   panel: LayoutDashboard,
+  proyectos: FolderOpen,
 };
 
 function useIsActive() {
