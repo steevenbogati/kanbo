@@ -5,25 +5,14 @@ import { usePathname } from "next/navigation";
 import { CalendarCheck, KanbanSquare, LayoutDashboard, List } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import type { NavIcon, NavItem } from "@/lib/nav-items";
 
-export type NavItem = { href: string; label: string; icon: keyof typeof ICONS };
-
-const ICONS = {
+const ICONS: Record<NavIcon, typeof List> = {
   "mi-dia": CalendarCheck,
   tablero: KanbanSquare,
   lista: List,
   panel: LayoutDashboard,
-} as const;
-
-export function navItems(isAdmin: boolean): NavItem[] {
-  const items: NavItem[] = [
-    { href: "/mi-dia", label: "Mi día", icon: "mi-dia" },
-    { href: "/tablero", label: "Tablero", icon: "tablero" },
-    { href: "/lista", label: "Lista", icon: "lista" },
-  ];
-  if (isAdmin) items.push({ href: "/panel", label: "Panel", icon: "panel" });
-  return items;
-}
+};
 
 function useIsActive() {
   const pathname = usePathname();

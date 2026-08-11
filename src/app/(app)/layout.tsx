@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { ROLE_LABEL } from "@/lib/labels";
-import { BottomNav, navItems, SidebarNav } from "@/components/nav";
+import { navItems } from "@/lib/nav-items";
+import { BottomNav, SidebarNav } from "@/components/nav";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
