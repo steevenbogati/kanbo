@@ -3,6 +3,17 @@
 Ideas que aparecieron al diseñar la v1 y que **no** se van a construir ahora.
 Cada una es candidata para la v2.
 
+## Salió de la construcción (fases 2 a 5)
+- **Ordenar las tarjetas a mano dentro de una columna** del tablero. Hoy el orden es
+  automático: primero las vencidas, luego por prioridad y por fecha de entrega. La
+  columna `board_position` ya existe en la base de datos para cuando se quiera hacer.
+- **Editar el nombre de un proyecto** después de creado (hoy se archiva y se crea otro).
+- **Borrar un proyecto** desde la app (hoy solo se archiva, para no romper el historial).
+- **Recuperar la contraseña por correo** desde la pantalla de entrada. Hoy la cambia el
+  administrador desde Supabase.
+- **Ver y editar el equipo desde la app** (nombres, roles, desactivar cuentas). Hoy se
+  hace con `npm run crear-usuario` y desde el panel de Supabase.
+
 ## Salió de decisiones de la Fase 0
 - **Subtareas / checklists** dentro de una tarea.
 - **Etiquetas libres** además de proyecto y prioridad.

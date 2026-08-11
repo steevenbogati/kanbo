@@ -5,7 +5,7 @@ import Link from "next/link";
 import { CalendarClock, Link2, Repeat } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { dueLabel } from "@/lib/dates";
+import { dueLabel, formatDays } from "@/lib/dates";
 import { PRIORITY_BAR, PRIORITY_LABEL, PRIORITY_STYLE } from "@/lib/labels";
 import { initials } from "@/components/user-menu";
 import { TaskDialog } from "@/components/tasks/task-dialog";
@@ -36,7 +36,12 @@ export function TaskCard({
   isDragging?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
-  const due = dueLabel(task.due_date);
+
+  // A finished task shows how long it took, not how late it was.
+  const due =
+    task.status === "done"
+      ? { text: task.duration_days !== null ? `Entregada en ${formatDays(task.duration_days)}` : "Entregada", tone: "calm" as const }
+      : dueLabel(task.due_date);
 
   return (
     <>

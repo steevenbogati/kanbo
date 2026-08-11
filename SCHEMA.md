@@ -77,7 +77,7 @@ Se crea solo con un trigger cuando tú creas el usuario en Supabase.
 | `external_url` | text | enlace externo (Drive, Figma, repo…) |
 | `board_position` | numeric | orden dentro de la columna del Kanban |
 | `recurrence` | recurrence_kind | default `none` |
-| `recurrence_parent_id` | uuid → tasks | de qué tarea nació esta repetición |
+| `recurrence_parent_id` | uuid → tasks | la repetición anterior de la que nació esta tarea |
 | `started_at` | timestamptz | **automático**: primera vez que entró a "en progreso" |
 | `completed_at` | timestamptz | **automático**: cuándo pasó a "hecho" |
 | `duration_days` | numeric(6,2) | **automático**: días entre `started_at` y `completed_at` |
