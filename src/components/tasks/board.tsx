@@ -172,6 +172,9 @@ export function Board({
 
   return (
     <DndContext
+      // Fixed id: without it dnd-kit generates a different accessibility id on
+      // the server and in the browser, which React reports as a mismatch.
+      id="tablero"
       sensors={sensors}
       collisionDetection={collisionDetection}
       onDragStart={handleDragStart}
