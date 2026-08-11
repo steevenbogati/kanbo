@@ -11,6 +11,8 @@ export type RecurrenceKind = "none" | "daily" | "weekly" | "monthly";
 export type Profile = {
   id: string;
   full_name: string;
+  /** The login handle, e.g. "steeven1". Lowercase, unique. */
+  username: string;
   email: string;
   role: UserRole;
   is_active: boolean;
@@ -92,6 +94,7 @@ export type TaskOverview = Omit<
 export type WorkloadByPerson = {
   profile_id: string;
   full_name: string;
+  username: string;
   email: string;
   role: UserRole;
   open_tasks: number;
