@@ -11,6 +11,14 @@ export const STATUS_LABEL: Record<TaskStatus, string> = {
   done: "Hecho",
 };
 
+/** Text shown when a board column has nothing in it. */
+export const STATUS_EMPTY: Record<TaskStatus, string> = {
+  backlog: "Nada por hacer",
+  in_progress: "Nada en progreso",
+  in_review: "Nada por revisar",
+  done: "Nada entregado todavía",
+};
+
 export const PRIORITY_ORDER: TaskPriority[] = ["high", "medium", "low"];
 
 export const PRIORITY_LABEL: Record<TaskPriority, string> = {
@@ -31,15 +39,32 @@ export const ROLE_LABEL: Record<UserRole, string> = {
   member: "Miembro",
 };
 
-/** Tailwind classes per priority, used on badges and card borders. */
-export const PRIORITY_STYLE: Record<TaskPriority, string> = {
-  high: "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-300",
-  medium: "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300",
-  low: "border-slate-400/40 bg-slate-400/10 text-slate-600 dark:text-slate-300",
+/**
+ * Status palette, reserved. Every use pairs the color with a word, so nothing
+ * depends on color alone.
+ */
+export const PRIORITY_CHIP: Record<TaskPriority, string> = {
+  high: "bg-high-soft text-high",
+  medium: "bg-medium-soft text-medium",
+  low: "bg-low-soft text-low",
 };
 
-export const PRIORITY_BAR: Record<TaskPriority, string> = {
-  high: "bg-red-500",
-  medium: "bg-amber-500",
-  low: "bg-slate-400",
+export const PRIORITY_DOT: Record<TaskPriority, string> = {
+  high: "bg-high",
+  medium: "bg-medium",
+  low: "bg-low",
+};
+
+export const STATUS_DOT: Record<TaskStatus, string> = {
+  backlog: "bg-low",
+  in_progress: "bg-primary",
+  in_review: "bg-medium",
+  done: "bg-done",
+};
+
+export const STATUS_CHIP: Record<TaskStatus, string> = {
+  backlog: "bg-low-soft text-low",
+  in_progress: "bg-accent text-accent-foreground",
+  in_review: "bg-medium-soft text-medium",
+  done: "bg-done-soft text-done",
 };

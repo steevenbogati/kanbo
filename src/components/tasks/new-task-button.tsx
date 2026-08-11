@@ -22,7 +22,7 @@ export function NewTaskButton({
       projects={projects}
       isAdmin={isAdmin}
       trigger={
-        <DialogTrigger render={<Button size="lg" />}>
+        <DialogTrigger render={<Button className="h-10 px-3.5 text-[13px] font-semibold" />}>
           <Plus className="size-4" />
           Nueva tarea
         </DialogTrigger>

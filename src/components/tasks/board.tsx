@@ -22,13 +22,13 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
-import { STATUS_LABEL, STATUS_ORDER } from "@/lib/labels";
+import { STATUS_DOT, STATUS_EMPTY, STATUS_LABEL, STATUS_ORDER } from "@/lib/labels";
+import { sortTasks } from "@/lib/task-order";
 import { moveTask } from "@/app/actions/tasks";
 import { Button } from "@/components/ui/button";
 import { DialogTrigger } from "@/components/ui/dialog";
 import { TaskCard } from "@/components/tasks/task-card";
 import { TaskDialog } from "@/components/tasks/task-dialog";
-import { sortTasks } from "@/lib/task-order";
 import type { Profile, Project, TaskOverview, TaskStatus } from "@/lib/types/database";
 
 /**
@@ -74,16 +74,19 @@ function Column({
   return (
     <section
       ref={setNodeRef}
+      aria-label={STATUS_LABEL[status]}
       className={cn(
-        "flex w-[85vw] shrink-0 flex-col gap-2 rounded-xl border bg-muted/30 p-2 transition-colors sm:w-72 md:w-full",
-        isOver && "border-foreground/30 bg-muted",
+        "flex w-[84vw] shrink-0 snap-start flex-col rounded-xl border bg-muted/40 transition-colors duration-150 sm:w-[300px] md:w-full",
+        isOver && "border-primary/45 bg-accent/60",
       )}
     >
-      <header className="flex items-center justify-between px-1 py-0.5">
-        <h2 className="text-sm font-medium">
-          {STATUS_LABEL[status]}{" "}
-          <span className="text-muted-foreground">({tasks.length})</span>
-        </h2>
+      <header className="sticky top-0 z-10 flex items-center gap-2 rounded-t-xl border-b bg-muted/40 px-3 py-2.5 backdrop-blur-sm">
+        <span aria-hidden className={cn("size-2 shrink-0 rounded-full", STATUS_DOT[status])} />
+        <h2 className="text-[13px] font-semibold tracking-tight">{STATUS_LABEL[status]}</h2>
+        <span className="nums rounded-md bg-background px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
+          {tasks.length}
+        </span>
+
         <TaskDialog
           team={team}
           projects={projects}
@@ -91,7 +94,7 @@ function Column({
           defaultStatus={status}
           trigger={
             <DialogTrigger
-              render={<Button variant="ghost" size="icon-sm" />}
+              render={<Button variant="ghost" size="icon-sm" className="ml-auto" />}
               aria-label={`Nueva tarea en ${STATUS_LABEL[status]}`}
             >
               <Plus className="size-4" />
@@ -100,7 +103,7 @@ function Column({
         />
       </header>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex min-h-[120px] flex-col gap-2 p-2">
         {tasks.map((task) => (
           <DraggableCard
             key={task.id}
@@ -110,8 +113,16 @@ function Column({
             isAdmin={isAdmin}
           />
         ))}
+
         {tasks.length === 0 && (
-          <p className="px-1 py-6 text-center text-xs text-muted-foreground">Nada por aquí.</p>
+          <p
+            className={cn(
+              "flex flex-1 items-center justify-center rounded-lg border border-dashed px-3 py-8 text-center text-[12px] leading-relaxed text-muted-foreground transition-colors duration-150",
+              isOver && "border-primary/45 text-accent-foreground",
+            )}
+          >
+            {isOver ? "Suelta aquí" : STATUS_EMPTY[status]}
+          </p>
         )}
       </div>
     </section>
@@ -180,7 +191,7 @@ export function Board({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-4 md:overflow-visible md:px-0">
+      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-2 md:snap-none md:overflow-visible md:px-0 xl:grid-cols-4">
         {STATUS_ORDER.map((status) => (
           <Column
             key={status}
@@ -193,9 +204,9 @@ export function Board({
         ))}
       </div>
 
-      <DragOverlay>
+      <DragOverlay dropAnimation={{ duration: 180, easing: "cubic-bezier(0.2, 0, 0, 1)" }}>
         {dragging && (
-          <div className="w-72 rotate-1">
+          <div className="w-[280px] rotate-1 opacity-95 shadow-lg">
             <TaskCard task={dragging} team={team} projects={projects} isAdmin={isAdmin} />
           </div>
         )}

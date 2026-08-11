@@ -25,21 +25,32 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
   const isActive = useIsActive();
 
   return (
-    <nav className="flex flex-col gap-1">
+    <nav aria-label="Secciones" className="flex flex-col gap-0.5">
       {items.map((item) => {
         const Icon = ICONS[item.icon];
+        const active = isActive(item.href);
+
         return (
           <Link
             key={item.href}
             href={item.href}
+            aria-current={active ? "page" : undefined}
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-              isActive(item.href)
-                ? "bg-accent font-medium text-accent-foreground"
-                : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+              "group relative flex h-10 items-center gap-2.5 rounded-lg px-3 text-sm transition-colors duration-150",
+              active
+                ? "bg-accent font-semibold text-accent-foreground"
+                : "font-medium text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            <Icon className="size-4 shrink-0" />
+            {/* Active marker: not color alone. */}
+            <span
+              aria-hidden
+              className={cn(
+                "absolute left-0 h-5 w-[3px] rounded-r-full bg-primary transition-opacity duration-150",
+                active ? "opacity-100" : "opacity-0",
+              )}
+            />
+            <Icon className={cn("size-[18px] shrink-0", active && "text-primary")} />
             {item.label}
           </Link>
         );
@@ -48,28 +59,41 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
   );
 }
 
-/** Bottom bar on phones. */
+/** Bottom bar on phones. Max 5 items, icon + label, safe-area aware. */
 export function BottomNav({ items }: { items: NavItem[] }) {
   const isActive = useIsActive();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur md:hidden">
+    <nav
+      aria-label="Secciones"
+      className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/85 backdrop-blur-md md:hidden"
+    >
       <ul
         className="mx-auto grid max-w-lg"
         style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
       >
         {items.map((item) => {
           const Icon = ICONS[item.icon];
+          const active = isActive(item.href);
+
           return (
             <li key={item.href}>
               <Link
                 href={item.href}
+                aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex flex-col items-center gap-1 px-1 py-2.5 text-[11px]",
-                  isActive(item.href) ? "text-foreground" : "text-muted-foreground",
+                  "relative flex min-h-[56px] flex-col items-center justify-center gap-1 px-1 pt-1.5 text-[11px] font-medium transition-colors duration-150",
+                  active ? "text-primary" : "text-muted-foreground",
                 )}
               >
-                <Icon className="size-5" />
+                <span
+                  aria-hidden
+                  className={cn(
+                    "absolute top-0 h-[3px] w-8 rounded-b-full bg-primary transition-opacity duration-150",
+                    active ? "opacity-100" : "opacity-0",
+                  )}
+                />
+                <Icon className="size-[19px]" />
                 {item.label}
               </Link>
             </li>
