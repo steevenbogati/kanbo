@@ -4,7 +4,9 @@ Plataforma de tareas para el equipo. Reemplaza la coordinación por WhatsApp: ca
 tiene un responsable, una fecha, un estado y un historial, y tú ves de un vistazo en qué
 está cada persona y cuánto demora realmente cada entrega.
 
-Se usa desde la laptop y desde el celular, en modo claro u oscuro.
+Se usa desde la laptop y desde el celular. **Abre siempre en fondo claro**, sin importar
+cómo tenga configurado el equipo cada persona; quien prefiera fondo oscuro lo activa desde
+su menú de cuenta y queda guardado solo en su dispositivo.
 
 ---
 

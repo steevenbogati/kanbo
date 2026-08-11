@@ -11,8 +11,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Tablero de tareas del equipo",
     start_url: "/mi-dia",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#0a0a0a",
+    background_color: "#f8f9fb",
+    theme_color: "#f8f9fb",
     lang: "es",
     icons: [{ src: "/icono.svg", sizes: "any", type: "image/svg+xml" }],
   };
