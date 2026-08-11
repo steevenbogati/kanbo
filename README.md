@@ -12,7 +12,8 @@ Se usa desde la laptop y desde el celular, en modo claro u oscuro.
 
 **Para todos**
 
-- **Entrar** con correo y contraseña. Solo existen las cuentas que tú creas.
+- **Entrar** con un usuario corto (por ejemplo `steeven1`) y una contraseña. Nadie escribe
+  su correo. Solo existen las cuentas que tú creas.
 - **Mi día**: tus tareas y nada más, con las vencidas arriba y el resto ordenado por
   prioridad y fecha de entrega.
 - **Tablero**: cuatro columnas (Por hacer, En progreso, En revisión, Hecho). Arrastras la
@@ -102,12 +103,16 @@ se aplican igual (o pegando de nuevo `apply-all.sql`, que los incluye todos).
 Solo tú creas cuentas. Desde la terminal del proyecto:
 
 ```
-npm run crear-usuario -- correo@dominio.com "ContraseñaSegura123" "Nombre Apellido" admin
-npm run crear-usuario -- editor@dominio.com "ContraseñaSegura123" "Nombre Apellido"
+npm run crear-usuario -- steeven1 "ContraseñaSegura123" "Steeven Yanez" steeven@dominio.com admin
+npm run crear-usuario -- editor1  "ContraseñaSegura123" "Nombre Apellido" editor@dominio.com
 ```
 
-- El último dato es el rol: escribe `admin` para el administrador y **no escribas nada**
-  para un miembro (el editor y el programador).
+El orden es: **usuario, contraseña, nombre completo, correo** y, al final, `admin` solo si
+es administrador (si no escribes nada, la cuenta queda como miembro).
+
+- El **usuario** es con lo que la persona entra: de 3 a 20 caracteres, en minúsculas, sin
+  espacios ni tildes. Por ejemplo `editor1`, `juan.p`, `dev_ana`.
+- El **correo** no se usa para entrar, solo para las notificaciones.
 - La contraseña se la entregas tú a la persona. Puede entrar de inmediato, sin correo de
   confirmación.
 - Para cambiar una contraseña: Supabase → **Authentication** → **Users** → los tres puntos
@@ -117,10 +122,10 @@ npm run crear-usuario -- editor@dominio.com "ContraseñaSegura123" "Nombre Apell
 
 ### Cuentas que ya existen
 
-| Correo | Rol | Para qué |
+| Usuario | Rol | Para qué |
 |---|---|---|
-| `s.yanez@edibschool.com` | Administrador | Tu cuenta |
-| `prueba.miembro@example.com` | Miembro | Cuenta de prueba, para ver la app como la ve un miembro |
+| `steeven1` | Administrador | Tu cuenta |
+| `prueba1` | Miembro | Cuenta de prueba, para ver la app como la ve un miembro |
 
 **Cambia la contraseña de tu cuenta** (pasó por un chat) y **borra la cuenta de prueba**
 cuando crees las cuentas reales del editor y del programador.
@@ -215,8 +220,8 @@ En Supabase → **Authentication** → **URL Configuration**, pon la dirección 
 
 ## Si algo se rompe
 
-- **"Correo o contraseña incorrectos"** y estás seguro de la clave: revisa que el usuario
-  exista en Supabase → Authentication → Users.
+- **"Usuario o contraseña incorrectos"** y estás seguro de la clave: revisa que el usuario
+  exista, en Supabase → **Table editor** → tabla `profiles`, columna `username`.
 - **La app carga pero no aparece ninguna tarea**: revisa que corriste el SQL de
   `supabase/apply-all.sql`.
 - **"Falta SUPABASE_SERVICE_ROLE_KEY"**: falta el archivo `.env.local` o una de sus líneas.

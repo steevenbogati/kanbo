@@ -3,6 +3,13 @@
 Ideas que aparecieron al diseñar la v1 y que **no** se van a construir ahora.
 Cada una es candidata para la v2.
 
+## Salió del rediseño y del cambio a usuario
+- **Cambiar tu propia contraseña desde la app** (hoy la cambia el administrador en Supabase).
+- **Cambiar tu nombre o tu usuario desde la app**. El usuario lo define el administrador y
+  no se puede editar: es la llave de entrada.
+- **Ordenar las tarjetas a mano** dentro de una columna del tablero.
+- **Elegir un color por proyecto** para distinguirlos de un vistazo en el tablero.
+
 ## Salió de la construcción (fases 2 a 5)
 - **Ordenar las tarjetas a mano dentro de una columna** del tablero. Hoy el orden es
   automático: primero las vencidas, luego por prioridad y por fecha de entrega. La

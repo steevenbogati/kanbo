@@ -48,7 +48,8 @@ Se crea solo con un trigger cuando tú creas el usuario en Supabase.
 |---|---|---|
 | `id` | uuid PK | = `auth.users.id`, on delete cascade |
 | `full_name` | text | Nombre visible |
-| `email` | text | Copia para mostrar en listas sin llamar a Auth |
+| `username` | text único | **Con esto entra la persona** (ej. `steeven1`): 3 a 20 caracteres, minúsculas, números, `.`, `_`, `-`. Nadie escribe su correo para entrar. |
+| `email` | text | Solo para las notificaciones y para que Auth funcione por dentro |
 | `role` | user_role | default `member` |
 | `is_active` | boolean | default true (para desactivar sin borrar) |
 | `created_at` | timestamptz | |
@@ -177,7 +178,7 @@ $$;
 
 | Tabla | SELECT (ver) | INSERT (crear) | UPDATE (editar) | DELETE (borrar) |
 |---|---|---|---|---|
-| `profiles` | todos los autenticados (para mostrar nombres en filtros y asignaciones) | nadie desde la app (solo el trigger de Auth) | uno mismo su `full_name`; el admin cualquiera, incluido `role` | nadie |
+| `profiles` | todos los autenticados (para mostrar nombres en filtros y asignaciones) | nadie desde la app (solo el trigger de Auth) | uno mismo su `full_name`; el admin cualquiera, incluidos `role` y `username` | nadie |
 | `projects` | todos los autenticados | solo admin | solo admin | solo admin |
 | `tasks` | admin todo; miembro solo donde es `assignee_id` **o** `created_by` | admin cualquiera; miembro solo si `created_by = auth.uid()` **y** `assignee_id = auth.uid()` (un miembro no reparte trabajo a otro) | admin todo; miembro solo sus tareas (responsable o creador) | solo admin |
 | `task_comments` | `can_access_task(task_id)` | `can_access_task(task_id)` **y** `author_id = auth.uid()` | solo el autor | autor o admin |
@@ -233,7 +234,21 @@ supabase/migrations/
   0006_task_triggers.sql         (tiempo, bitácora, recurrencia, guard de responsable)
   0007_storage.sql               (bucket privado + políticas)
   0008_views.sql                 (vistas del dashboard)
+  0009_username_login.sql        (usuario para entrar, en vez del correo)
+  0010_guard_allows_service_role.sql  (el candado del perfil no bloquea al servidor)
 ```
+
+## 8. Cómo funciona entrar con usuario
+
+Supabase Auth siempre necesita un correo por dentro. Para que nadie tenga que escribirlo:
+
+1. La persona escribe `steeven1` y su contraseña.
+2. El servidor busca el correo de ese `username` (con la clave secreta, para que un
+   visitante nunca pueda leer los correos del equipo).
+3. Con ese correo entra a Supabase Auth como siempre.
+
+Si el usuario no existe, está desactivado o la contraseña está mal, el mensaje es el mismo
+—"Usuario o contraseña incorrectos"— para no dar pistas de qué cuentas existen.
 
 ---
 
