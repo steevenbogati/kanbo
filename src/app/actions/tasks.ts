@@ -52,7 +52,7 @@ async function notifyAssignment(taskId: string, actorId: string) {
 
   if (!assignee?.email) return;
 
-  const sent = await sendEmail({
+  const result = await sendEmail({
     to: assignee.email,
     subject: `Nueva tarea: ${task.title}`,
     heading: "Te asignaron una tarea",
@@ -65,7 +65,8 @@ async function notifyAssignment(taskId: string, actorId: string) {
     linkPath: `/tarea/${task.id}`,
   });
 
-  if (sent) {
+  // Only a real send counts, so nothing is skipped once email is configured.
+  if (result === "sent") {
     await supabase
       .from("tasks")
       .update({ assignment_notified_at: new Date().toISOString() })

@@ -22,13 +22,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }
 
-  if (!emailEnabled()) {
-    return NextResponse.json({
-      enviados: 0,
-      mensaje: "Los correos están apagados: falta RESEND_API_KEY o EMAIL_FROM.",
-    });
-  }
-
   const supabase = createAdminClient();
   const today = todayISO();
 
@@ -61,6 +54,7 @@ export async function GET(request: NextRequest) {
   }
 
   let sentCount = 0;
+  let previewCount = 0;
 
   for (const [assigneeId, list] of groups) {
     const person = byId.get(assigneeId);
@@ -86,7 +80,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const sent = await sendEmail({
+    const result = await sendEmail({
       to: person.email,
       subject:
         overdue.length > 0
@@ -97,8 +91,11 @@ export async function GET(request: NextRequest) {
       linkPath: "/mi-dia",
     });
 
-    if (sent) {
+    if (result === "preview") previewCount += list.length;
+
+    if (result === "sent") {
       sentCount += list.length;
+      // Marked only after a real send, so nothing is silently skipped.
       await supabase
         .from("tasks")
         .update({ due_notified_on: today })
@@ -109,5 +106,12 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ enviados: sentCount, personas: groups.size });
+  return NextResponse.json({
+    personas: groups.size,
+    enviados: sentCount,
+    vista_previa: previewCount,
+    mensaje: emailEnabled()
+      ? undefined
+      : "Los correos están apagados (falta RESEND_API_KEY): revisa la terminal para ver el contenido.",
+  });
 }

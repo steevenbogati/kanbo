@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
@@ -32,7 +32,9 @@ export function TaskMenu({
   onEdit?: () => void;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [pending, startTransition] = useTransition();
+  const onDetailPage = pathname === `/tarea/${task.id}`;
 
   function move(status: TaskStatus) {
     startTransition(async () => {
@@ -51,7 +53,10 @@ export function TaskMenu({
       if (result.error) toast.error(result.error);
       else {
         toast.success("Tarea borrada");
-        router.refresh();
+        // Standing on the detail page of a task that no longer exists would
+        // show "no encontrada", so we step back to the board.
+        if (onDetailPage) router.push("/tablero");
+        else router.refresh();
       }
     });
   }
@@ -65,9 +70,11 @@ export function TaskMenu({
         <MoreHorizontal className="size-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem onClick={() => router.push(`/tarea/${task.id}`)}>
-          Ver detalle
-        </DropdownMenuItem>
+        {!onDetailPage && (
+          <DropdownMenuItem onClick={() => router.push(`/tarea/${task.id}`)}>
+            Ver detalle
+          </DropdownMenuItem>
+        )}
         {onEdit && <DropdownMenuItem onClick={onEdit}>Editar</DropdownMenuItem>}
 
         <DropdownMenuSeparator />

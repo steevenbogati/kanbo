@@ -77,6 +77,10 @@ Para usarla desde el celular, con la app encendida busca en la terminal la líne
 `Network: http://192.168.x.x:3000` y abre esa dirección en el teléfono, conectado al mismo
 wifi.
 
+**Dejarla como app en el celular:** abre esa dirección en el teléfono y usa
+*Agregar a la pantalla de inicio* (Compartir → Agregar a inicio en iPhone, menú ⋮ → Instalar
+aplicación en Android). Queda con su icono y se abre sin las barras del navegador.
+
 ---
 
 ## Preparar la base de datos (una sola vez)
@@ -125,7 +129,22 @@ cuando crees las cuentas reales del editor y del programador.
 
 ## Encender los correos
 
-Sin esto la app funciona igual, solo que no envía nada.
+Sin esto la app funciona igual: en lugar de enviar, **escribe el correo en la terminal**
+para que puedas revisar qué diría. Se ve así:
+
+```
+── Correo en vista previa (falta RESEND_API_KEY, no se envió nada) ──
+Para:    editor@dominio.com
+Asunto:  Nueva tarea: Subir el sitio a producción
+Título:  Te asignaron una tarea
+         Subir el sitio a producción
+         Proyecto: Redes sociales
+         Prioridad: Alta
+         Entrega: 14 ago
+Enlace:  http://localhost:3000/tarea/60d7417e-…
+```
+
+Para que salgan de verdad:
 
 1. Crea una cuenta gratis en [Resend](https://resend.com) (3.000 correos al mes).
 2. Verifica tu dominio, o usa el remitente de pruebas que te da Resend.
@@ -159,10 +178,25 @@ git commit -m "Describe en una línea qué cambiaste"
 git push
 ```
 
-Por decisión del equipo **no hay despliegue en internet**: la app se usa en local con
-`npm run dev`. El día que la quieras publicar, se conecta a Vercel en pocos minutos; el
-código ya está preparado para eso y no hay que cambiar nada, solo copiar las variables de
-`.env.local` en Vercel.
+Por ahora **no hay despliegue en internet**: la app se usa en local con `npm run dev`.
+
+### Cuando quieras publicarla (10 minutos, sin tocar código)
+
+1. Entra a [vercel.com](https://vercel.com) con tu cuenta de GitHub → **Add New Project**
+   → elige el repo `kanbo` → **Import**.
+2. En **Environment Variables** pega las mismas cinco líneas de tu `.env.local`
+   (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+   `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`), más:
+   - `NEXT_PUBLIC_APP_URL` con la dirección que te dé Vercel (para que los enlaces de los
+     correos apunten ahí).
+   - `CRON_SECRET` con cualquier texto largo y secreto.
+3. **Deploy**. Desde ahí, cada `git push` publica los cambios solo.
+
+El resumen diario de vencimientos ya está agendado en `vercel.json`: se envía todos los
+días a las 8:00 de Ecuador, sin que tengas que abrir nada.
+
+En Supabase → **Authentication** → **URL Configuration**, pon la dirección de Vercel en
+*Site URL*.
 
 ---
 
@@ -186,7 +220,11 @@ código ya está preparado para eso y no hay que cambiar nada, solo copiar las v
 - **La app carga pero no aparece ninguna tarea**: revisa que corriste el SQL de
   `supabase/apply-all.sql`.
 - **"Falta SUPABASE_SERVICE_ROLE_KEY"**: falta el archivo `.env.local` o una de sus líneas.
-- **El puerto está ocupado**: la terminal te ofrece otro (3001, 3002…). Úsalo.
+- **El puerto está ocupado**: la terminal te ofrece otro (3001, 3002…). Úsalo, y ajusta
+  `NEXT_PUBLIC_APP_URL` en `.env.local` si quieres que los enlaces de los correos apunten
+  a ese puerto.
+- **No llegan los correos**: revisa la terminal. Si ves "Correo en vista previa", falta la
+  clave de Resend.
 
 ---
 
