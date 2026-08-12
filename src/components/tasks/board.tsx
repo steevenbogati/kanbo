@@ -74,11 +74,11 @@ function Column({
       ref={setNodeRef}
       aria-label={STATUS_LABEL[status]}
       className={cn(
-        "flex w-[84vw] shrink-0 snap-start flex-col rounded-xl border bg-muted/40 transition-colors duration-150 sm:w-[300px] md:w-full",
-        isOver && "border-primary/45 bg-accent/60",
+        "flex w-[84vw] shrink-0 snap-start flex-col rounded-[20px] border border-border/70 bg-panel/60 transition-colors duration-150 sm:w-[300px] md:w-full md:min-h-[460px]",
+        isOver && "border-primary/45 bg-accent/70",
       )}
     >
-      <header className="sticky top-0 z-10 flex items-center gap-2 rounded-t-xl border-b bg-muted/40 px-3 py-2.5 backdrop-blur-sm">
+      <header className="flex items-center gap-2 border-b border-border/70 px-3.5 py-3">
         <span aria-hidden className={cn("size-2 shrink-0 rounded-full", STATUS_DOT[status])} />
         <h2 className="text-[13px] font-semibold tracking-tight">{STATUS_LABEL[status]}</h2>
         <span className="nums rounded-md bg-background px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">

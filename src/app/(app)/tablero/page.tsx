@@ -26,6 +26,7 @@ export default function BoardPage() {
   return (
     <>
       <PageHeader
+        eyebrow="Trabajo"
         title="Tablero"
         subtitle="Arrastra una tarjeta para cambiarle el estado. En el celular, mantén el dedo un momento y luego mueve, o usa el menú de la tarjeta."
         action={<NewTaskButton team={data.team} projects={data.projects} onSaved={refresh} />}

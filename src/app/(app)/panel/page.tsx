@@ -106,7 +106,7 @@ function DashboardContent() {
 
   return (
     <>
-      <PageHeader title="Panel" subtitle="Cómo va el equipo ahora mismo." />
+      <PageHeader eyebrow="Administración" title="Panel" subtitle="Cómo va el equipo ahora mismo." />
 
       <div className="space-y-6">
         <section aria-label="Resumen" className="grid grid-cols-2 gap-3 lg:grid-cols-4">

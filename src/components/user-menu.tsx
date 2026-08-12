@@ -22,6 +22,24 @@ export function initials(name: string, fallback: string) {
     .join("");
 }
 
+/**
+ * Five fixed tints. Everyone keeps the same one always, so you learn to
+ * recognise people by colour without it meaning anything by itself.
+ */
+const TINTS = [
+  "bg-[oklch(0.93_0.05_20)] text-[oklch(0.42_0.14_20)]",
+  "bg-[oklch(0.93_0.045_255)] text-[oklch(0.42_0.13_255)]",
+  "bg-[oklch(0.93_0.05_155)] text-[oklch(0.4_0.11_155)]",
+  "bg-[oklch(0.93_0.05_75)] text-[oklch(0.42_0.12_60)]",
+  "bg-[oklch(0.93_0.05_300)] text-[oklch(0.42_0.13_300)]",
+];
+
+function tintFor(seed: string) {
+  let total = 0;
+  for (const char of seed) total += char.charCodeAt(0);
+  return TINTS[total % TINTS.length];
+}
+
 export function Avatar({
   name,
   fallback = "?",
@@ -37,7 +55,8 @@ export function Avatar({
     <span
       title={title}
       className={cn(
-        "flex size-8 shrink-0 select-none items-center justify-center rounded-full bg-secondary text-[11px] font-semibold text-secondary-foreground",
+        "flex size-8 shrink-0 select-none items-center justify-center rounded-full text-[11px] font-semibold",
+        tintFor(name || fallback),
         className,
       )}
     >

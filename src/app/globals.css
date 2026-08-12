@@ -9,9 +9,10 @@
 /*
   Design system
   -------------
-  Neutral cool-gray surfaces, one teal accent, and a reserved status palette
-  (high / medium / low / done). Color is never the only signal: every status
-  also carries a label, and most carry an icon.
+  A soft lavender canvas, white panels floating on it, one coral accent for
+  anything you can act on, and a reserved status palette (high / medium / low /
+  done). Color is never the only signal: every status also carries a word, and
+  most carry an icon.
 */
 
 @theme inline {
@@ -24,6 +25,7 @@
 
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-panel: var(--panel);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
@@ -50,99 +52,104 @@
   --color-done-soft: var(--status-done-soft);
   --color-track: var(--track);
 
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.7);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-xl: calc(var(--radius) * 1.3);
+  --radius-2xl: calc(var(--radius) * 1.7);
   --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-4xl: calc(var(--radius) * 2.8);
 
-  --shadow-xs: 0 1px 2px 0 oklch(0.24 0.02 250 / 0.05);
-  --shadow-sm: 0 1px 3px 0 oklch(0.24 0.02 250 / 0.07), 0 1px 2px -1px oklch(0.24 0.02 250 / 0.06);
-  --shadow-md: 0 4px 12px -2px oklch(0.24 0.02 250 / 0.1), 0 2px 4px -2px oklch(0.24 0.02 250 / 0.06);
-  --shadow-lg: 0 12px 28px -8px oklch(0.24 0.02 250 / 0.18);
+  --shadow-xs: 0 1px 2px 0 oklch(0.3 0.05 275 / 0.04);
+  --shadow-sm: 0 2px 8px -2px oklch(0.3 0.05 275 / 0.07);
+  --shadow-md: 0 8px 24px -6px oklch(0.3 0.05 275 / 0.1);
+  --shadow-lg: 0 24px 48px -16px oklch(0.3 0.05 275 / 0.18);
+  --shadow-shell: 0 32px 80px -32px oklch(0.3 0.06 275 / 0.28);
 }
 
 :root {
-  --radius: 0.75rem;
+  --radius: 0.875rem;
 
-  --background: oklch(0.984 0.003 250);
-  --foreground: oklch(0.245 0.019 254);
+  /* The canvas is a gradient (see body); this is its average, for anything
+     that needs a flat equivalent. */
+  --background: oklch(0.975 0.008 288);
+  --foreground: oklch(0.285 0.045 276);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.245 0.019 254);
+  --card-foreground: oklch(0.285 0.045 276);
+  --panel: oklch(0.963 0.014 286);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.245 0.019 254);
+  --popover-foreground: oklch(0.285 0.045 276);
 
-  --primary: oklch(0.55 0.098 187);
-  --primary-foreground: oklch(0.99 0.008 190);
+  --primary: oklch(0.665 0.168 18);
+  --primary-foreground: oklch(0.995 0.005 20);
 
-  --secondary: oklch(0.966 0.005 250);
-  --secondary-foreground: oklch(0.3 0.019 254);
+  --secondary: oklch(0.958 0.011 286);
+  --secondary-foreground: oklch(0.34 0.04 276);
 
-  --muted: oklch(0.966 0.005 250);
-  --muted-foreground: oklch(0.512 0.017 254);
+  --muted: oklch(0.962 0.01 286);
+  --muted-foreground: oklch(0.545 0.032 277);
 
-  --accent: oklch(0.958 0.021 187);
-  --accent-foreground: oklch(0.38 0.062 187);
+  --accent: oklch(0.955 0.035 20);
+  --accent-foreground: oklch(0.5 0.15 20);
 
-  --destructive: oklch(0.552 0.19 25);
+  --destructive: oklch(0.55 0.2 25);
 
-  --border: oklch(0.915 0.006 254);
-  --input: oklch(0.915 0.006 254);
-  --ring: oklch(0.62 0.09 187);
+  --border: oklch(0.915 0.012 286);
+  --input: oklch(0.915 0.012 286);
+  --ring: oklch(0.7 0.14 18);
 
-  --status-high: oklch(0.53 0.185 25);
-  --status-high-soft: oklch(0.955 0.032 25);
-  --status-medium: oklch(0.55 0.125 62);
-  --status-medium-soft: oklch(0.96 0.04 75);
-  --status-low: oklch(0.5 0.02 254);
-  --status-low-soft: oklch(0.958 0.005 254);
-  --status-done: oklch(0.5 0.105 155);
-  --status-done-soft: oklch(0.955 0.032 155);
+  --status-high: oklch(0.52 0.205 24);
+  --status-high-soft: oklch(0.952 0.035 24);
+  --status-medium: oklch(0.545 0.13 62);
+  --status-medium-soft: oklch(0.955 0.045 72);
+  --status-low: oklch(0.5 0.035 277);
+  --status-low-soft: oklch(0.955 0.012 286);
+  --status-done: oklch(0.5 0.11 158);
+  --status-done-soft: oklch(0.95 0.035 158);
 
-  /* Unfilled part of a meter: a lighter step of the accent ramp. */
-  --track: oklch(0.93 0.018 187);
+  /* Unfilled part of a meter. */
+  --track: oklch(0.925 0.015 286);
 }
 
 .dark {
-  --background: oklch(0.19 0.012 254);
-  --foreground: oklch(0.968 0.004 250);
+  --background: oklch(0.205 0.03 282);
+  --foreground: oklch(0.965 0.008 286);
 
-  --card: oklch(0.232 0.014 254);
-  --card-foreground: oklch(0.968 0.004 250);
-  --popover: oklch(0.248 0.015 254);
-  --popover-foreground: oklch(0.968 0.004 250);
+  --card: oklch(0.252 0.032 282);
+  --card-foreground: oklch(0.965 0.008 286);
+  --panel: oklch(0.232 0.031 282);
+  --popover: oklch(0.268 0.032 282);
+  --popover-foreground: oklch(0.965 0.008 286);
 
-  --primary: oklch(0.735 0.105 185);
-  --primary-foreground: oklch(0.2 0.028 190);
+  --primary: oklch(0.72 0.16 20);
+  --primary-foreground: oklch(0.21 0.04 20);
 
-  --secondary: oklch(0.28 0.015 254);
-  --secondary-foreground: oklch(0.95 0.005 250);
+  --secondary: oklch(0.3 0.03 282);
+  --secondary-foreground: oklch(0.95 0.008 286);
 
-  --muted: oklch(0.278 0.014 254);
-  --muted-foreground: oklch(0.712 0.015 254);
+  --muted: oklch(0.298 0.03 282);
+  --muted-foreground: oklch(0.735 0.022 284);
 
-  --accent: oklch(0.315 0.035 187);
-  --accent-foreground: oklch(0.9 0.055 187);
+  --accent: oklch(0.34 0.055 20);
+  --accent-foreground: oklch(0.9 0.07 20);
 
-  --destructive: oklch(0.68 0.165 25);
+  --destructive: oklch(0.68 0.175 25);
 
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.62 0.085 187);
+  --border: oklch(1 0 0 / 11%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.68 0.14 20);
 
-  --status-high: oklch(0.72 0.155 25);
-  --status-high-soft: oklch(0.32 0.062 25);
-  --status-medium: oklch(0.78 0.125 75);
-  --status-medium-soft: oklch(0.32 0.05 70);
-  --status-low: oklch(0.72 0.015 254);
-  --status-low-soft: oklch(0.3 0.012 254);
-  --status-done: oklch(0.74 0.115 158);
-  --status-done-soft: oklch(0.3 0.05 158);
+  --status-high: oklch(0.73 0.16 24);
+  --status-high-soft: oklch(0.34 0.07 24);
+  --status-medium: oklch(0.79 0.13 75);
+  --status-medium-soft: oklch(0.34 0.055 70);
+  --status-low: oklch(0.73 0.022 284);
+  --status-low-soft: oklch(0.315 0.026 282);
+  --status-done: oklch(0.75 0.12 158);
+  --status-done-soft: oklch(0.32 0.055 158);
 
-  --track: oklch(0.32 0.03 187);
+  --track: oklch(0.335 0.03 282);
 }
 
 @layer base {
@@ -155,9 +162,26 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /*
+    The canvas: a lavender-to-peach wash with two soft lights, so the panels
+    have something to float on. Fixed so it does not scroll away.
+  */
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: var(--background);
+    background-image:
+      radial-gradient(90% 70% at 8% 0%, oklch(0.93 0.045 296 / 0.75) 0%, transparent 60%),
+      radial-gradient(70% 60% at 100% 8%, oklch(0.95 0.04 32 / 0.7) 0%, transparent 55%),
+      radial-gradient(60% 50% at 50% 100%, oklch(0.96 0.025 300 / 0.6) 0%, transparent 60%);
+    background-attachment: fixed;
     font-feature-settings: "cv11", "ss01";
+  }
+
+  .dark body {
+    background-image:
+      radial-gradient(90% 70% at 8% 0%, oklch(0.36 0.075 296 / 0.55) 0%, transparent 60%),
+      radial-gradient(70% 60% at 100% 8%, oklch(0.34 0.07 25 / 0.45) 0%, transparent 55%),
+      radial-gradient(60% 50% at 50% 100%, oklch(0.3 0.05 300 / 0.5) 0%, transparent 60%);
   }
 
   /* One visible focus treatment for the whole app. */
@@ -170,7 +194,7 @@
     color: var(--accent-foreground);
   }
 
-  /* Quiet scrollbars, so the Kanban columns don't look noisy. */
+  /* Quiet scrollbars, so the sliding rows don't look noisy. */
   * {
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
@@ -197,6 +221,25 @@
   /* Columns of numbers only: big standalone values keep proportional figures. */
   .nums {
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Small caps section label, like "MENU" in the sidebar. */
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground;
+  }
+
+  /* Rows that slide sideways: hide the bar, keep the snap. */
+  .rail-scroll {
+    scrollbar-width: none;
+  }
+  .rail-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* A faint dotted texture, used on the hero so it is not a flat block. */
+  .dotted {
+    background-image: radial-gradient(currentColor 1px, transparent 1px);
+    background-size: 14px 14px;
   }
 }
 

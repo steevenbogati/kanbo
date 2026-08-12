@@ -53,7 +53,8 @@ function ListContent() {
   return (
     <>
       <PageHeader
-        title="Lista"
+        eyebrow="Trabajo"
+        title="Todas las tareas"
         subtitle={`${sorted.length} ${sorted.length === 1 ? "tarea" : "tareas"} con los filtros actuales`}
         action={<NewTaskButton team={data.team} projects={data.projects} onSaved={refresh} />}
       />

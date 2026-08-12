@@ -16,6 +16,7 @@ function ProjectsContent() {
   return (
     <>
       <PageHeader
+        eyebrow="Administración"
         title="Proyectos y clientes"
         subtitle="Sirven para agrupar y filtrar las tareas."
       />
