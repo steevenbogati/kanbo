@@ -1,7 +1,6 @@
 "use client";
 
 import { useOptimistic, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import {
   closestCorners,
   DndContext,
@@ -24,7 +23,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { STATUS_DOT, STATUS_EMPTY, STATUS_LABEL, STATUS_ORDER } from "@/lib/labels";
 import { sortTasks } from "@/lib/task-order";
-import { moveTask } from "@/app/actions/tasks";
+import { moveTask } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { DialogTrigger } from "@/components/ui/dialog";
 import { TaskCard } from "@/components/tasks/task-card";
@@ -41,17 +40,24 @@ const collisionDetection: CollisionDetection = (args) => {
   return byPointer.length > 0 ? byPointer : closestCorners(args);
 };
 
-function DraggableCard(props: {
-  task: TaskOverview;
+type Shared = {
   team: Profile[];
   projects: Project[];
   isAdmin: boolean;
-}) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: props.task.id });
+  onChanged: () => void;
+};
+
+function DraggableCard({ task, ...shared }: { task: TaskOverview } & Shared) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id });
 
   return (
     <div ref={setNodeRef}>
-      <TaskCard {...props} dragHandle={{ ...attributes, ...listeners }} isDragging={isDragging} />
+      <TaskCard
+        task={task}
+        {...shared}
+        dragHandle={{ ...attributes, ...listeners }}
+        isDragging={isDragging}
+      />
     </div>
   );
 }
@@ -59,16 +65,8 @@ function DraggableCard(props: {
 function Column({
   status,
   tasks,
-  team,
-  projects,
-  isAdmin,
-}: {
-  status: TaskStatus;
-  tasks: TaskOverview[];
-  team: Profile[];
-  projects: Project[];
-  isAdmin: boolean;
-}) {
+  ...shared
+}: { status: TaskStatus; tasks: TaskOverview[] } & Shared) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   return (
@@ -88,10 +86,10 @@ function Column({
         </span>
 
         <TaskDialog
-          team={team}
-          projects={projects}
-          isAdmin={isAdmin}
+          team={shared.team}
+          projects={shared.projects}
           defaultStatus={status}
+          onSaved={shared.onChanged}
           trigger={
             <DialogTrigger
               render={<Button variant="ghost" size="icon-sm" className="ml-auto" />}
@@ -105,13 +103,7 @@ function Column({
 
       <div className="flex min-h-[120px] flex-col gap-2 p-2">
         {tasks.map((task) => (
-          <DraggableCard
-            key={task.id}
-            task={task}
-            team={team}
-            projects={projects}
-            isAdmin={isAdmin}
-          />
+          <DraggableCard key={task.id} task={task} {...shared} />
         ))}
 
         {tasks.length === 0 && (
@@ -134,18 +126,15 @@ export function Board({
   team,
   projects,
   isAdmin,
+  onChanged,
 }: {
   tasks: TaskOverview[];
-  team: Profile[];
-  projects: Project[];
-  isAdmin: boolean;
-}) {
-  const router = useRouter();
+} & Shared) {
   const [, startTransition] = useTransition();
   const [dragging, setDragging] = useState<TaskOverview | null>(null);
 
-  // The card jumps to the new column right away; if the server rejects the
-  // change, the refresh puts it back where it was.
+  // The card jumps to the new column right away; if the database rejects the
+  // change, the reload puts it back where it was.
   const [optimisticTasks, applyMove] = useOptimistic(
     tasks,
     (current: TaskOverview[], move: { id: string; status: TaskStatus }) =>
@@ -158,6 +147,8 @@ export function Board({
     // Lets the board be used with the keyboard: space to lift, arrows, space to drop.
     useSensor(KeyboardSensor),
   );
+
+  const shared: Shared = { team, projects, isAdmin, onChanged };
 
   function handleDragStart(event: DragStartEvent) {
     setDragging(optimisticTasks.find((task) => task.id === event.active.id) ?? null);
@@ -177,7 +168,7 @@ export function Board({
       applyMove({ id, status });
       const result = await moveTask(id, status);
       if (result.error) toast.error(result.error);
-      router.refresh();
+      onChanged();
     });
   }
 
@@ -197,9 +188,7 @@ export function Board({
             key={status}
             status={status}
             tasks={sortTasks(optimisticTasks.filter((task) => task.status === status))}
-            team={team}
-            projects={projects}
-            isAdmin={isAdmin}
+            {...shared}
           />
         ))}
       </div>
@@ -207,7 +196,7 @@ export function Board({
       <DragOverlay dropAnimation={{ duration: 180, easing: "cubic-bezier(0.2, 0, 0, 1)" }}>
         {dragging && (
           <div className="w-[280px] rotate-1 opacity-95 shadow-lg">
-            <TaskCard task={dragging} team={team} projects={projects} isAdmin={isAdmin} />
+            <TaskCard task={dragging} {...shared} />
           </div>
         )}
       </DragOverlay>

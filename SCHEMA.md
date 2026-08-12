@@ -236,19 +236,40 @@ supabase/migrations/
   0008_views.sql                 (vistas del dashboard)
   0009_username_login.sql        (usuario para entrar, en vez del correo)
   0010_guard_allows_service_role.sql  (el candado del perfil no bloquea al servidor)
+  0011_contact_email.sql         (separa el correo de entrada del correo de contacto)
 ```
 
 ## 8. Cómo funciona entrar con usuario
 
-Supabase Auth siempre necesita un correo por dentro. Para que nadie tenga que escribirlo:
+Supabase Auth siempre necesita un correo por dentro, y la app no tiene servidor (se publica
+como archivos estáticos en GitHub Pages). La solución es que el correo de entrada se pueda
+deducir del usuario:
 
 1. La persona escribe `steeven1` y su contraseña.
-2. El servidor busca el correo de ese `username` (con la clave secreta, para que un
-   visitante nunca pueda leer los correos del equipo).
+2. El navegador arma el correo interno `steeven1@kanbo.local`.
 3. Con ese correo entra a Supabase Auth como siempre.
 
-Si el usuario no existe, está desactivado o la contraseña está mal, el mensaje es el mismo
-—"Usuario o contraseña incorrectos"— para no dar pistas de qué cuentas existen.
+Ese correo interno **no existe** como buzón y nadie lo escribe nunca. El correo real de la
+persona vive aparte, en `profiles.email`, y solo se usa para las notificaciones. Por eso el
+disparador que copiaba el correo de Auth al perfil se eliminó (migración 0011): si no, al
+cambiar el correo de entrada se habría borrado el correo de contacto.
+
+Si el usuario no existe o la contraseña está mal, el mensaje es el mismo —"Usuario o
+contraseña incorrectos"— para no dar pistas de qué cuentas existen.
+
+## 9. Por qué la seguridad sigue en pie sin servidor
+
+Todo corre en el navegador con la clave publicable, que por diseño es pública. Lo único que
+protege los datos son las políticas RLS de este documento, y eso es suficiente porque:
+
+- Postgres las aplica en cada consulta, sin importar de dónde venga.
+- La clave secreta nunca llega al navegador: solo se usa en los scripts locales
+  (`npm run crear-usuario`) y en la tarea de GitHub Actions que manda los correos.
+- Las pantallas que solo ve el admin (`/panel`, `/proyectos`) se esconden en la interfaz,
+  pero además la base rechaza sus operaciones si alguien las fuerza.
+
+Está comprobado atacando la API directamente con la sesión de un miembro: 0 filas ajenas
+leídas, 0 editadas, 0 borradas.
 
 ---
 

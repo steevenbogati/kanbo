@@ -26,7 +26,7 @@ export const viewport: Viewport = {
   themeColor: "#f8f9fb",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" suppressHydrationWarning className={`${jakarta.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-background text-foreground">

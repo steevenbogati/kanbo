@@ -3,6 +3,17 @@
 Ideas que aparecieron al diseñar la v1 y que **no** se van a construir ahora.
 Cada una es candidata para la v2.
 
+## Salió al publicar en GitHub Pages
+- **Dirección propia** (tipo `tareas.tudominio.com`) en vez de `steevenbogati.github.io/kanbo`.
+  GitHub Pages lo permite; hay que tocar el DNS.
+- **Que la app se actualice sola cuando otra persona mueve una tarea** (tiempo real). Hoy se
+  ve al recargar o al volver a entrar a la pantalla.
+- **Que funcione sin internet** y sincronice después.
+- **Avisos al instante**: los correos salen cada media hora, no en el segundo en que asignas
+  la tarea, porque los manda una tarea programada de GitHub.
+- **Crear usuarios desde la app**: sigue siendo un comando en tu computadora, porque hacerlo
+  desde el navegador exigiría exponer la clave secreta.
+
 ## Salió del rediseño y del cambio a usuario
 - **Cambiar tu propia contraseña desde la app** (hoy la cambia el administrador en Supabase).
 - **Cambiar tu nombre o tu usuario desde la app**. El usuario lo define el administrador y

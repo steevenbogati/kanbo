@@ -1,20 +1,24 @@
 /**
- * Creates a user in Supabase Auth (the only way accounts are created).
- * The profiles row appears automatically via the on_auth_user_created trigger.
+ * Creates a user. It is the only way accounts are born: nobody can sign up.
  *
- * People sign in with the USERNAME, not with the email. The email is still
- * needed for the notifications.
+ * People sign in with the USERNAME. Supabase Auth needs an email, so the account
+ * carries an internal one (usuario@kanbo.local) that nobody types; the real
+ * address is stored apart and is only used for the notifications.
  *
  * Usage:
  *   npm run crear-usuario -- steeven1 "Contraseña123" "Nombre Apellido" correo@dominio.com admin
  *   npm run crear-usuario -- editor1  "Contraseña123" "Nombre Apellido" correo@dominio.com
  *                                                                                      ^ sin rol = miembro
+ *
+ * El correo es opcional: escribe "-" si esa persona no debe recibir avisos.
  */
 import { createClient } from "@supabase/supabase-js";
 
-const [username, password, fullName, email, role = "member"] = process.argv.slice(2);
+const LOGIN_DOMAIN = "kanbo.local";
 
-if (!username || !password || !fullName || !email) {
+const [username, password, fullName, contactEmailRaw = "-", role = "member"] = process.argv.slice(2);
+
+if (!username || !password || !fullName) {
   console.error(
     [
       "Faltan datos. Ejemplo:",
@@ -28,18 +32,20 @@ if (!username || !password || !fullName || !email) {
 
 if (!/^[a-z0-9._-]{3,20}$/.test(username)) {
   console.error(
-    `Usuario inválido: "${username}".\nUsa entre 3 y 20 caracteres: minúsculas, números, punto, guion o guion bajo. Ejemplo: steeven1`,
+    `Usuario inválido: "${username}".\nUsa entre 3 y 20 caracteres: minúsculas, números, punto, guion o guion bajo. Ejemplo: editor1`,
   );
-  process.exit(1);
-}
-
-if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-  console.error(`Correo inválido: "${email}".`);
   process.exit(1);
 }
 
 if (password.length < 8) {
   console.error("La contraseña debe tener al menos 8 caracteres.");
+  process.exit(1);
+}
+
+const contactEmail = contactEmailRaw === "-" ? "" : contactEmailRaw;
+
+if (contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+  console.error(`Correo inválido: "${contactEmail}". Escribe "-" si no quieres poner ninguno.`);
   process.exit(1);
 }
 
@@ -72,10 +78,10 @@ if (taken) {
 }
 
 const { data, error } = await supabase.auth.admin.createUser({
-  email,
+  email: `${username}@${LOGIN_DOMAIN}`, // interno, nadie lo escribe
   password,
-  email_confirm: true, // no confirmation email: the admin hands over the password
-  user_metadata: { full_name: fullName, username, role },
+  email_confirm: true,
+  user_metadata: { full_name: fullName, username, role, contact_email: contactEmail },
 });
 
 if (error) {
@@ -83,43 +89,38 @@ if (error) {
   process.exit(1);
 }
 
-// The database trigger fills the profile from the data above. We read it back to
-// be sure, instead of writing it again.
-const { data: profile, error: profileError } = await supabase
+// The database trigger fills the profile; we read it back to be sure.
+const { data: profile } = await supabase
   .from("profiles")
-  .select("username, full_name, role")
+  .select("username, role, email")
   .eq("id", data.user.id)
   .maybeSingle();
 
-if (profileError || !profile) {
+if (!profile) {
   console.error(
-    `El usuario quedó creado, pero no se pudo leer su perfil. ¿Corriste todas las migraciones de /supabase?`,
+    "El usuario quedó creado, pero no se pudo leer su perfil. ¿Aplicaste todas las migraciones de /supabase?",
   );
   process.exit(1);
 }
 
-if (profile.username !== username || profile.role !== role) {
+if (profile.username !== username || profile.role !== role || profile.email !== contactEmail) {
   const { error: fixError } = await supabase
     .from("profiles")
-    .update({ full_name: fullName, username, role })
+    .update({ full_name: fullName, username, role, email: contactEmail })
     .eq("id", data.user.id);
 
   if (fixError) {
-    console.error(
-      [
-        `El usuario quedó creado, pero su perfil no coincide:`,
-        `  esperado: ${username} / ${role}`,
-        `  guardado: ${profile.username} / ${profile.role}`,
-        ``,
-        `Aplica las migraciones nuevas de /supabase/migrations y vuelve a intentar.`,
-      ].join("\n"),
-    );
+    console.error(`El usuario quedó creado, pero no se pudo ajustar su perfil: ${fixError.message}`);
     process.exit(1);
   }
 }
 
 console.log(
-  `Listo. ${fullName} entra con el usuario "${username}" como ${
-    role === "admin" ? "administrador" : "miembro"
-  }.`,
+  [
+    `Listo. ${fullName} entra con:`,
+    `  usuario:    ${username}`,
+    `  contraseña: ${password}`,
+    `  rol:        ${role === "admin" ? "administrador" : "miembro"}`,
+    contactEmail ? `  avisos a:   ${contactEmail}` : "  avisos:     ninguno (sin correo)",
+  ].join("\n"),
 );

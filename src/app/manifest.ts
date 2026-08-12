@@ -1,5 +1,8 @@
 import type { MetadataRoute } from "next";
 
+// Static export: the manifest is written once at build time.
+export const dynamic = "force-static";
+
 /**
  * Lets the app be added to the phone's home screen and open without the
  * browser bars, which is how the team will use it day to day.

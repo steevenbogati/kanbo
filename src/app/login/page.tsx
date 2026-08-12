@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { CheckCircle2, Clock3, KanbanSquare } from "lucide-react";
 
 import { LogoMark } from "@/components/logo";
@@ -13,13 +14,7 @@ const HIGHLIGHTS = [
   { icon: CheckCircle2, text: "Cada quien ve solo lo que le toca." },
 ];
 
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ redirect?: string; error?: string }>;
-}) {
-  const params = await searchParams;
-
+export default function LoginPage() {
   return (
     <div className="grid min-h-dvh lg:grid-cols-[1.1fr_1fr]">
       {/* Brand side: only from lg up, so the phone goes straight to the form. */}
@@ -28,10 +23,7 @@ export default async function LoginPage({
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-[0.55] [background:radial-gradient(120%_90%_at_15%_0%,var(--accent)_0%,transparent_55%)]"
         />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 w-px bg-border"
-        />
+        <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-px bg-border" />
 
         <div className="relative flex items-center gap-2.5">
           <LogoMark />
@@ -82,17 +74,12 @@ export default async function LoginPage({
               Usa el usuario y la contraseña que te compartió el administrador.
             </p>
 
-            {params.error === "perfil" && (
-              <p
-                role="alert"
-                className="mt-5 rounded-lg bg-medium-soft px-3 py-2.5 text-sm text-medium"
-              >
-                Tu cuenta existe pero no tiene perfil. Pídele al administrador que la revise.
-              </p>
-            )}
-
             <div className="mt-7">
-              <LoginForm redirectTo={params.redirect ?? "/mi-dia"} />
+              <Suspense
+                fallback={<p className="text-sm text-muted-foreground">Cargando…</p>}
+              >
+                <LoginForm />
+              </Suspense>
             </div>
 
             <p className="mt-8 border-t pt-5 text-[13px] leading-relaxed text-muted-foreground">

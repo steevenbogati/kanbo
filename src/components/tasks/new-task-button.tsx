@@ -10,17 +10,17 @@ import type { Profile, Project } from "@/lib/types/database";
 export function NewTaskButton({
   team,
   projects,
-  isAdmin,
+  onSaved,
 }: {
   team: Profile[];
   projects: Project[];
-  isAdmin: boolean;
+  onSaved: () => void;
 }) {
   return (
     <TaskDialog
       team={team}
       projects={projects}
-      isAdmin={isAdmin}
+      onSaved={onSaved}
       trigger={
         <DialogTrigger render={<Button className="h-10 px-3.5 text-[13px] font-semibold" />}>
           <Plus className="size-4" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { STATUS_LABEL, STATUS_ORDER } from "@/lib/labels";
-import { deleteTask, moveTask } from "@/app/actions/tasks";
+import { deleteTask, moveTask } from "@/lib/data";
 import type { TaskOverview, TaskStatus } from "@/lib/types/database";
 
 /**
@@ -26,39 +26,43 @@ export function TaskMenu({
   task,
   isAdmin,
   onEdit,
+  onChanged,
 }: {
   task: TaskOverview;
   isAdmin: boolean;
   onEdit?: () => void;
+  onChanged: () => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [pending, startTransition] = useTransition();
-  const onDetailPage = pathname === `/tarea/${task.id}`;
+  const [pending, setPending] = useState(false);
+  const onDetailPage = pathname.startsWith("/tarea");
 
-  function move(status: TaskStatus) {
-    startTransition(async () => {
-      const result = await moveTask(task.id, status);
-      if (result.error) toast.error(result.error);
-      else {
-        toast.success(`Movida a ${STATUS_LABEL[status]}`);
-        router.refresh();
-      }
-    });
+  async function move(status: TaskStatus) {
+    setPending(true);
+    const result = await moveTask(task.id, status);
+    setPending(false);
+
+    if (result.error) toast.error(result.error);
+    else {
+      toast.success(`Movida a ${STATUS_LABEL[status]}`);
+      onChanged();
+    }
   }
 
-  function remove() {
-    startTransition(async () => {
-      const result = await deleteTask(task.id);
-      if (result.error) toast.error(result.error);
-      else {
-        toast.success("Tarea borrada");
-        // Standing on the detail page of a task that no longer exists would
-        // show "no encontrada", so we step back to the board.
-        if (onDetailPage) router.push("/tablero");
-        else router.refresh();
-      }
-    });
+  async function remove() {
+    setPending(true);
+    const result = await deleteTask(task.id);
+    setPending(false);
+
+    if (result.error) toast.error(result.error);
+    else {
+      toast.success("Tarea borrada");
+      // Standing on the detail page of a task that no longer exists would show
+      // "no encontrada", so we step back to the board.
+      if (onDetailPage) router.replace("/tablero");
+      else onChanged();
+    }
   }
 
   return (
@@ -69,9 +73,10 @@ export function TaskMenu({
       >
         <MoreHorizontal className="size-4" />
       </DropdownMenuTrigger>
+
       <DropdownMenuContent align="end" className="w-48">
         {!onDetailPage && (
-          <DropdownMenuItem onClick={() => router.push(`/tarea/${task.id}`)}>
+          <DropdownMenuItem onClick={() => router.push(`/tarea?id=${task.id}`)}>
             Ver detalle
           </DropdownMenuItem>
         )}
@@ -80,7 +85,7 @@ export function TaskMenu({
         <DropdownMenuSeparator />
         <DropdownMenuLabel>Mover a</DropdownMenuLabel>
         {STATUS_ORDER.filter((status) => status !== task.status).map((status) => (
-          <DropdownMenuItem key={status} onClick={() => move(status)}>
+          <DropdownMenuItem key={status} onClick={() => void move(status)}>
             {STATUS_LABEL[status]}
           </DropdownMenuItem>
         ))}
@@ -88,7 +93,7 @@ export function TaskMenu({
         {isAdmin && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" onClick={remove}>
+            <DropdownMenuItem variant="destructive" onClick={() => void remove()}>
               Borrar tarea
             </DropdownMenuItem>
           </>

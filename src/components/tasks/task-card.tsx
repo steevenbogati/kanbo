@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/components/app-link";
 import { CalendarClock, CheckCircle2, Link2, Repeat, TriangleAlert } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -24,6 +24,7 @@ export function TaskCard({
   team,
   projects,
   isAdmin,
+  onChanged,
   dragHandle,
   isDragging,
 }: {
@@ -31,6 +32,7 @@ export function TaskCard({
   team: Profile[];
   projects: Project[];
   isAdmin: boolean;
+  onChanged: () => void;
   /** Props from dnd-kit, when the card lives on the board. */
   dragHandle?: React.HTMLAttributes<HTMLElement>;
   isDragging?: boolean;
@@ -41,7 +43,10 @@ export function TaskCard({
   // A finished task reports how long it took, not how late it was.
   const due = isDone
     ? {
-        text: task.duration_days !== null ? `Entregada en ${formatDays(task.duration_days)}` : "Entregada",
+        text:
+          task.duration_days !== null
+            ? `Entregada en ${formatDays(task.duration_days)}`
+            : "Entregada",
         tone: "calm" as const,
         icon: CheckCircle2,
       }
@@ -69,7 +74,7 @@ export function TaskCard({
 
           <div className="min-w-0 flex-1">
             <Link
-              href={`/tarea/${task.id}`}
+              href={`/tarea?id=${task.id}`}
               className={cn(
                 "line-clamp-2 text-[14px] font-semibold leading-snug tracking-tight decoration-muted-foreground/40 underline-offset-2 hover:underline",
                 isDone && "text-muted-foreground",
@@ -80,7 +85,9 @@ export function TaskCard({
 
             {task.project_name && (
               <p className="mt-1 truncate text-[12px] text-muted-foreground">
-                {task.client_name ? `${task.project_name} · ${task.client_name}` : task.project_name}
+                {task.client_name
+                  ? `${task.project_name} · ${task.client_name}`
+                  : task.project_name}
               </p>
             )}
           </div>
@@ -102,7 +109,12 @@ export function TaskCard({
             </span>
           )}
 
-          <TaskMenu task={task} isAdmin={isAdmin} onEdit={() => setEditing(true)} />
+          <TaskMenu
+            task={task}
+            isAdmin={isAdmin}
+            onEdit={() => setEditing(true)}
+            onChanged={onChanged}
+          />
         </div>
 
         <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 pl-4">
@@ -116,10 +128,7 @@ export function TaskCard({
           </span>
 
           <span
-            className={cn(
-              "inline-flex items-center gap-1 text-[12px] font-medium",
-              DUE_TONE[due.tone],
-            )}
+            className={cn("inline-flex items-center gap-1 text-[12px] font-medium", DUE_TONE[due.tone])}
           >
             <DueIcon className="size-3.5" />
             {due.text}
@@ -133,10 +142,7 @@ export function TaskCard({
           )}
 
           {task.external_url && (
-            <span
-              title="Tiene un enlace"
-              className="inline-flex items-center text-muted-foreground"
-            >
+            <span title="Tiene un enlace" className="inline-flex items-center text-muted-foreground">
               <Link2 className="size-3.5" />
               <span className="sr-only">Tiene un enlace</span>
             </span>
@@ -148,9 +154,9 @@ export function TaskCard({
         task={task}
         team={team}
         projects={projects}
-        isAdmin={isAdmin}
         open={editing}
         onOpenChange={setEditing}
+        onSaved={onChanged}
       />
     </>
   );

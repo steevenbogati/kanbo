@@ -1,17 +1,18 @@
-import type { Metadata } from "next";
-import Link from "next/link";
+"use client";
+
+import { Link } from "@/components/app-link";
 import { ArrowRight, CalendarClock, CheckCircle2, Inbox, TriangleAlert, Users } from "lucide-react";
 
-import { requireAdmin } from "@/lib/auth";
-import { getTasks, getWorkload } from "@/lib/queries";
+import { AdminOnly } from "@/components/auth-provider";
+import { fetchTasks, fetchWorkload } from "@/lib/data";
+import { useData } from "@/lib/use-data";
 import { daysAgoISO, formatDays, todayISO } from "@/lib/dates";
 import { ROLE_LABEL, STATUS_DOT, STATUS_LABEL } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
+import { LoadError, PageSkeleton } from "@/components/page-states";
 import { Avatar } from "@/components/user-menu";
-
-export const metadata: Metadata = { title: "Panel" };
 
 /**
  * Stat tile: label, value, and an optional note. The value keeps proportional
@@ -71,22 +72,26 @@ function Meter({ value, max, tone }: { value: number; max: number; tone: "accent
   );
 }
 
-export default async function DashboardPage() {
-  await requireAdmin();
+function DashboardContent() {
+  const { data, loading, error, refresh } = useData(async () => {
+    const [workload, tasks] = await Promise.all([fetchWorkload(), fetchTasks()]);
+    return { workload, tasks };
+  });
 
-  const [workload, tasks] = await Promise.all([getWorkload(), getTasks()]);
+  if (error) return <LoadError message={error} onRetry={refresh} />;
+  if (loading || !data) return <PageSkeleton title="Panel" />;
 
   const today = todayISO();
-  const open = tasks.filter((task) => task.status !== "done");
+  const open = data.tasks.filter((task) => task.status !== "done");
   const overdue = open.filter((task) => task.is_overdue);
   const dueToday = open.filter((task) => task.due_date === today);
 
   const weekAgo = daysAgoISO(7);
-  const deliveredThisWeek = tasks.filter(
+  const deliveredThisWeek = data.tasks.filter(
     (task) => task.status === "done" && task.completed_at && task.completed_at >= weekAgo,
   );
 
-  const durations = tasks
+  const durations = data.tasks
     .filter((task) => task.status === "done" && task.duration_days !== null)
     .map((task) => task.duration_days as number);
   const average =
@@ -97,7 +102,7 @@ export default async function DashboardPage() {
     count: open.filter((task) => task.status === status).length,
   }));
 
-  const busiest = Math.max(1, ...workload.map((person) => person.open_tasks));
+  const busiest = Math.max(1, ...data.workload.map((person) => person.open_tasks));
 
   return (
     <>
@@ -128,13 +133,13 @@ export default async function DashboardPage() {
             <header className="flex items-center gap-2 border-b px-4 py-3">
               <Users className="size-4 text-muted-foreground" />
               <h2 className="text-[13px] font-semibold tracking-tight">Carga por persona</h2>
-              <p className="ml-auto text-[11px] text-muted-foreground">
+              <p className="ml-auto hidden text-[11px] text-muted-foreground sm:block">
                 La barra compara contra quien tiene más carga
               </p>
             </header>
 
             <div className="p-4">
-              {workload.length === 0 ? (
+              {data.workload.length === 0 ? (
                 <EmptyState
                   compact
                   icon={Users}
@@ -143,7 +148,7 @@ export default async function DashboardPage() {
                 />
               ) : (
                 <ul className="divide-y">
-                  {workload.map((person) => (
+                  {data.workload.map((person) => (
                     <li key={person.profile_id} className="py-3.5 first:pt-0 last:pb-0">
                       <div className="flex items-center gap-3">
                         <Avatar name={person.full_name} fallback={person.username} />
@@ -248,5 +253,13 @@ export default async function DashboardPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <AdminOnly>
+      <DashboardContent />
+    </AdminOnly>
   );
 }

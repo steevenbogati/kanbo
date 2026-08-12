@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { signOut } from "@/app/login/actions";
+import { supabase } from "@/lib/supabase/browser";
 
 export function initials(name: string, fallback: string) {
   const source = name.trim() || fallback;
@@ -109,16 +109,14 @@ export function UserMenu({
 
         <DropdownMenuSeparator />
 
-        <form action={signOut}>
-          <DropdownMenuItem
-            variant="destructive"
-            render={<button type="submit" />}
-            className="w-full cursor-pointer"
-          >
-            <LogOut className="size-4" />
-            Salir
-          </DropdownMenuItem>
-        </form>
+        <DropdownMenuItem
+          variant="destructive"
+          className="cursor-pointer"
+          onClick={() => void supabase().auth.signOut()}
+        >
+          <LogOut className="size-4" />
+          Salir
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

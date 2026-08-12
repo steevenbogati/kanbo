@@ -1,42 +1,56 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { useFormStatus } from "react-dom";
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signIn, type LoginState } from "./actions";
+import { loginEmailFor, supabase } from "@/lib/supabase/browser";
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
+export function LoginForm() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const redirectTo = params.get("redirect");
 
-  return (
-    <Button type="submit" className="h-11 w-full text-[15px]" disabled={pending}>
-      {pending ? (
-        <>
-          <Loader2 className="size-4 animate-spin" />
-          Entrando…
-        </>
-      ) : (
-        <>
-          Entrar
-          <ArrowRight className="size-4" />
-        </>
-      )}
-    </Button>
-  );
-}
-
-export function LoginForm({ redirectTo }: { redirectTo: string }) {
-  const [state, formAction] = useActionState<LoginState, FormData>(signIn, { error: null });
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  return (
-    <form action={formAction} className="space-y-5" noValidate>
-      <input type="hidden" name="redirect" value={redirectTo} />
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const username = String(form.get("username") ?? "")
+      .trim()
+      .toLowerCase();
+    const password = String(form.get("password") ?? "");
 
+    if (!username || !password) {
+      setError("Escribe tu usuario y tu contraseña.");
+      return;
+    }
+
+    setPending(true);
+    setError(null);
+
+    const { error: signInError } = await supabase().auth.signInWithPassword({
+      email: loginEmailFor(username),
+      password,
+    });
+
+    if (signInError) {
+      // Same message for every failure, so nobody can guess which users exist.
+      setError("Usuario o contraseña incorrectos.");
+      setPending(false);
+      return;
+    }
+
+    router.replace(redirectTo?.startsWith("/") ? redirectTo : "/mi-dia");
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-5" noValidate>
       <div className="space-y-2">
         <Label htmlFor="username" className="text-[13px]">
           Usuario
@@ -52,7 +66,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
           placeholder="steeven1"
           className="h-11 text-base"
           aria-describedby="username-hint"
-          aria-invalid={Boolean(state.error)}
+          aria-invalid={Boolean(error)}
           required
           autoFocus
         />
@@ -73,7 +87,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
             autoComplete="current-password"
             placeholder="••••••••"
             className="h-11 pr-11 text-base"
-            aria-invalid={Boolean(state.error)}
+            aria-invalid={Boolean(error)}
             required
           />
           <button
@@ -87,18 +101,30 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
         </div>
       </div>
 
-      {state.error && (
+      {error && (
         <p
           role="alert"
           aria-live="polite"
           className="flex items-start gap-2 rounded-lg bg-high-soft px-3 py-2.5 text-sm text-high"
         >
           <AlertCircle className="mt-0.5 size-4 shrink-0" />
-          {state.error}
+          {error}
         </p>
       )}
 
-      <SubmitButton />
+      <Button type="submit" className="h-11 w-full text-[15px]" disabled={pending}>
+        {pending ? (
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            Entrando…
+          </>
+        ) : (
+          <>
+            Entrar
+            <ArrowRight className="size-4" />
+          </>
+        )}
+      </Button>
     </form>
   );
 }

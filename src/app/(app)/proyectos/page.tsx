@@ -1,15 +1,17 @@
-import type { Metadata } from "next";
+"use client";
 
-import { requireAdmin } from "@/lib/auth";
-import { getProjects } from "@/lib/queries";
+import { AdminOnly } from "@/components/auth-provider";
+import { fetchProjects } from "@/lib/data";
+import { useData } from "@/lib/use-data";
 import { PageHeader } from "@/components/page-header";
+import { LoadError, PageSkeleton } from "@/components/page-states";
 import { ProjectManager } from "@/components/projects/project-manager";
 
-export const metadata: Metadata = { title: "Proyectos" };
+function ProjectsContent() {
+  const { data, loading, error, refresh } = useData(() => fetchProjects(true));
 
-export default async function ProjectsPage() {
-  await requireAdmin();
-  const projects = await getProjects(true);
+  if (error) return <LoadError message={error} onRetry={refresh} />;
+  if (loading || !data) return <PageSkeleton title="Proyectos y clientes" />;
 
   return (
     <>
@@ -17,7 +19,15 @@ export default async function ProjectsPage() {
         title="Proyectos y clientes"
         subtitle="Sirven para agrupar y filtrar las tareas."
       />
-      <ProjectManager projects={projects} />
+      <ProjectManager projects={data} onChanged={refresh} />
     </>
+  );
+}
+
+export default function ProjectsPage() {
+  return (
+    <AdminOnly>
+      <ProjectsContent />
+    </AdminOnly>
   );
 }

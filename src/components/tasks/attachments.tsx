@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 import {
   Download,
   FileArchive,
@@ -15,9 +14,9 @@ import {
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/client";
 import { formatDateTime } from "@/lib/dates";
-import { deleteAttachment, registerAttachment } from "@/app/actions/tasks";
+import { deleteAttachment, uploadAttachment } from "@/lib/data";
+import { useAuth } from "@/components/auth-provider";
 import type { TaskAttachment } from "@/lib/types/database";
 
 const MAX_SIZE = 25 * 1024 * 1024;
@@ -37,33 +36,19 @@ function iconFor(mimeType: string, fileName: string) {
   return FileText;
 }
 
-/** Keeps only characters that are safe in a Storage path. */
-function safeName(name: string): string {
-  return name
-    .normalize("NFD") // splits accents off, then the next line drops them
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-zA-Z0-9._-]/g, "-")
-    .slice(-80);
-}
-
 export function Attachments({
   taskId,
   files,
-  currentUserId,
-  isAdmin,
+  onChanged,
 }: {
   taskId: string;
   files: (TaskAttachment & { url: string | null })[];
-  currentUserId: string;
-  isAdmin: boolean;
+  onChanged: () => void;
 }) {
+  const { userId, isAdmin } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-  const [, startTransition] = useTransition();
-  const router = useRouter();
 
-  // The file goes straight from the browser to Supabase Storage; the row is
-  // saved afterwards through a server action.
   async function upload(file: File) {
     if (file.size > MAX_SIZE) {
       toast.error("El archivo pasa de 25 MB.");
@@ -72,44 +57,24 @@ export function Attachments({
     }
 
     setUploading(true);
-    const supabase = createClient();
-    const path = `${taskId}/${crypto.randomUUID()}-${safeName(file.name)}`;
-
-    const { error } = await supabase.storage.from("task-files").upload(path, file);
-
-    if (error) {
-      setUploading(false);
-      toast.error(`No se pudo subir el archivo: ${error.message}`);
-      return;
-    }
-
-    const result = await registerAttachment({
-      taskId,
-      storagePath: path,
-      fileName: file.name,
-      fileSize: file.size,
-      mimeType: file.type || "application/octet-stream",
-    });
-
+    const result = await uploadAttachment(taskId, file, userId);
     setUploading(false);
     if (inputRef.current) inputRef.current.value = "";
 
     if (result.error) toast.error(result.error);
     else {
       toast.success("Archivo subido");
-      router.refresh();
+      onChanged();
     }
   }
 
-  function remove(file: TaskAttachment) {
-    startTransition(async () => {
-      const result = await deleteAttachment(file.id, taskId, file.storage_path);
-      if (result.error) toast.error(result.error);
-      else {
-        toast.success("Archivo borrado");
-        router.refresh();
-      }
-    });
+  async function remove(file: TaskAttachment) {
+    const result = await deleteAttachment(file.id, file.storage_path);
+    if (result.error) toast.error(result.error);
+    else {
+      toast.success("Archivo borrado");
+      onChanged();
+    }
   }
 
   return (
@@ -147,13 +112,13 @@ export function Attachments({
                   </Button>
                 )}
 
-                {(file.uploaded_by === currentUserId || isAdmin) && (
+                {(file.uploaded_by === userId || isAdmin) && (
                   <Button
                     variant="ghost"
                     size="icon-sm"
                     aria-label={`Borrar ${file.file_name}`}
                     className="text-muted-foreground opacity-0 transition-opacity duration-150 focus-visible:opacity-100 group-hover:opacity-100"
-                    onClick={() => remove(file)}
+                    onClick={() => void remove(file)}
                   >
                     <Trash2 className="size-3.5" />
                   </Button>

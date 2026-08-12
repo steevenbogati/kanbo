@@ -1,26 +1,43 @@
-import type { Metadata } from "next";
+"use client";
 
-import { requireSession } from "@/lib/auth";
-import { getProjects, getTasks, getTeam } from "@/lib/queries";
+import { useAuth } from "@/components/auth-provider";
+import { fetchProjects, fetchTasks, fetchTeam } from "@/lib/data";
+import { useData } from "@/lib/use-data";
 import { PageHeader } from "@/components/page-header";
+import { LoadError, PageSkeleton } from "@/components/page-states";
 import { Board } from "@/components/tasks/board";
 import { NewTaskButton } from "@/components/tasks/new-task-button";
 
-export const metadata: Metadata = { title: "Tablero" };
+export default function BoardPage() {
+  const { isAdmin } = useAuth();
 
-export default async function BoardPage() {
-  const { isAdmin } = await requireSession();
-  const [tasks, team, projects] = await Promise.all([getTasks(), getTeam(), getProjects()]);
+  const { data, loading, error, refresh } = useData(async () => {
+    const [tasks, team, projects] = await Promise.all([
+      fetchTasks(),
+      fetchTeam(),
+      fetchProjects(),
+    ]);
+    return { tasks, team, projects };
+  });
+
+  if (error) return <LoadError message={error} onRetry={refresh} />;
+  if (loading || !data) return <PageSkeleton title="Tablero" />;
 
   return (
     <>
       <PageHeader
         title="Tablero"
         subtitle="Arrastra una tarjeta para cambiarle el estado. En el celular, mantén el dedo un momento y luego mueve, o usa el menú de la tarjeta."
-        action={<NewTaskButton team={team} projects={projects} isAdmin={isAdmin} />}
+        action={<NewTaskButton team={data.team} projects={data.projects} onSaved={refresh} />}
       />
 
-      <Board tasks={tasks} team={team} projects={projects} isAdmin={isAdmin} />
+      <Board
+        tasks={data.tasks}
+        team={data.team}
+        projects={data.projects}
+        isAdmin={isAdmin}
+        onChanged={refresh}
+      />
     </>
   );
 }

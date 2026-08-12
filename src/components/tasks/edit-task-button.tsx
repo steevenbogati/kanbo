@@ -11,19 +11,19 @@ export function EditTaskButton({
   task,
   team,
   projects,
-  isAdmin,
+  onSaved,
 }: {
   task: TaskOverview;
   team: Profile[];
   projects: Project[];
-  isAdmin: boolean;
+  onSaved: () => void;
 }) {
   return (
     <TaskDialog
       task={task}
       team={team}
       projects={projects}
-      isAdmin={isAdmin}
+      onSaved={onSaved}
       trigger={
         <DialogTrigger render={<Button variant="outline" size="sm" />}>
           <Pencil className="size-3.5" />

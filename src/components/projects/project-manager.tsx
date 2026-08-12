@@ -1,8 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useTransition } from "react";
-import { useFormStatus } from "react-dom";
-import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 import { Archive, ArchiveRestore, FolderOpen, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -10,20 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/field";
 import { EmptyState } from "@/components/empty-state";
-import { idleState } from "@/lib/action-state";
-import { createProject, setProjectArchived } from "@/app/actions/projects";
+import { useAuth } from "@/components/auth-provider";
+import { createProject, setProjectArchived } from "@/lib/data";
 import type { Project } from "@/lib/types/database";
-
-function CreateButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button type="submit" className="h-11" disabled={pending}>
-      {pending ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-      Agregar
-    </Button>
-  );
-}
 
 function ProjectRow({
   project,
@@ -35,9 +22,7 @@ function ProjectRow({
   archived: boolean;
 }) {
   return (
-    <li
-      className={`flex items-center gap-3 py-3 first:pt-0 last:pb-0 ${archived ? "opacity-65" : ""}`}
-    >
+    <li className={`flex items-center gap-3 py-3 first:pt-0 last:pb-0 ${archived ? "opacity-65" : ""}`}>
       <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
         <FolderOpen className="size-4" />
       </span>
@@ -62,30 +47,44 @@ function ProjectRow({
   );
 }
 
-export function ProjectManager({ projects }: { projects: Project[] }) {
-  const [state, formAction] = useActionState(createProject, idleState);
-  const [, startTransition] = useTransition();
+export function ProjectManager({
+  projects,
+  onChanged,
+}: {
+  projects: Project[];
+  onChanged: () => void;
+}) {
+  const { userId } = useAuth();
   const formRef = useRef<HTMLFormElement>(null);
-  const router = useRouter();
+  const [pending, setPending] = useState(false);
 
-  useEffect(() => {
-    if (state.ok) {
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+
+    setPending(true);
+    const result = await createProject(
+      String(form.get("name") ?? ""),
+      String(form.get("client_name") ?? ""),
+      userId,
+    );
+    setPending(false);
+
+    if (result.error) toast.error(result.error);
+    else {
       formRef.current?.reset();
       toast.success("Proyecto creado");
-      router.refresh();
+      onChanged();
     }
-    if (state.error) toast.error(state.error);
-  }, [state, router]);
+  }
 
-  function toggleArchive(project: Project) {
-    startTransition(async () => {
-      const result = await setProjectArchived(project.id, !project.is_archived);
-      if (result.error) toast.error(result.error);
-      else {
-        toast.success(project.is_archived ? "Proyecto recuperado" : "Proyecto archivado");
-        router.refresh();
-      }
-    });
+  async function toggleArchive(project: Project) {
+    const result = await setProjectArchived(project.id, !project.is_archived);
+    if (result.error) toast.error(result.error);
+    else {
+      toast.success(project.is_archived ? "Proyecto recuperado" : "Proyecto archivado");
+      onChanged();
+    }
   }
 
   const active = projects.filter((project) => !project.is_archived);
@@ -98,7 +97,7 @@ export function ProjectManager({ projects }: { projects: Project[] }) {
           <h2 className="text-[13px] font-semibold tracking-tight">Nuevo proyecto</h2>
         </header>
 
-        <form ref={formRef} action={formAction} className="space-y-4 px-4 py-4">
+        <form ref={formRef} onSubmit={onSubmit} className="space-y-4 px-4 py-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Nombre" htmlFor="name">
               <Input
@@ -121,7 +120,10 @@ export function ProjectManager({ projects }: { projects: Project[] }) {
             </Field>
           </div>
           <div className="flex justify-end">
-            <CreateButton />
+            <Button type="submit" className="h-11" disabled={pending}>
+              {pending ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+              Agregar
+            </Button>
           </div>
         </form>
       </section>
@@ -149,7 +151,7 @@ export function ProjectManager({ projects }: { projects: Project[] }) {
                   key={project.id}
                   project={project}
                   archived={false}
-                  onToggle={() => toggleArchive(project)}
+                  onToggle={() => void toggleArchive(project)}
                 />
               ))}
             </ul>
@@ -172,7 +174,7 @@ export function ProjectManager({ projects }: { projects: Project[] }) {
                   key={project.id}
                   project={project}
                   archived
-                  onToggle={() => toggleArchive(project)}
+                  onToggle={() => void toggleArchive(project)}
                 />
               ))}
             </ul>

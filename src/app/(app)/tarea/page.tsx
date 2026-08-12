@@ -1,17 +1,13 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink, History } from "lucide-react";
+"use client";
 
-import { requireSession } from "@/lib/auth";
-import {
-  getActivity,
-  getAttachments,
-  getComments,
-  getProjects,
-  getTask,
-  getTeam,
-} from "@/lib/queries";
+import { Suspense } from "react";
+import { Link } from "@/components/app-link";
+import { useSearchParams } from "next/navigation";
+import { ArrowLeft, ExternalLink, History, SearchX } from "lucide-react";
+
+import { useAuth } from "@/components/auth-provider";
+import { fetchActivity, fetchAttachments, fetchComments, fetchProjects, fetchTask, fetchTeam } from "@/lib/data";
+import { useData } from "@/lib/use-data";
 import { formatDate, formatDateTime, formatDays } from "@/lib/dates";
 import {
   PRIORITY_CHIP,
@@ -23,27 +19,18 @@ import {
 } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/empty-state";
+import { LoadError, PageSkeleton } from "@/components/page-states";
 import { Attachments } from "@/components/tasks/attachments";
 import { Comments } from "@/components/tasks/comments";
 import { TaskMenu } from "@/components/tasks/task-menu";
 import { EditTaskButton } from "@/components/tasks/edit-task-button";
 
-export const metadata: Metadata = { title: "Tarea" };
-
-function Panel({
-  title,
-  children,
-  action,
-}: {
-  title: string;
-  children: React.ReactNode;
-  action?: React.ReactNode;
-}) {
+function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="rounded-xl border bg-card shadow-xs">
-      <header className="flex items-center justify-between gap-2 border-b px-4 py-3">
+      <header className="border-b px-4 py-3">
         <h2 className="text-[13px] font-semibold tracking-tight">{title}</h2>
-        {action}
       </header>
       <div className="px-4 py-4">{children}</div>
     </section>
@@ -59,20 +46,50 @@ function Meta({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
-export default async function TaskPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const { userId, isAdmin } = await requireSession();
+function TaskContent() {
+  const { isAdmin } = useAuth();
+  const params = useSearchParams();
+  const id = params.get("id");
 
-  const task = await getTask(id);
-  if (!task) notFound();
+  const { data, loading, error, refresh } = useData(
+    async () => {
+      if (!id) return null;
 
-  const [comments, files, activity, team, projects] = await Promise.all([
-    getComments(id),
-    getAttachments(id),
-    getActivity(id),
-    getTeam(),
-    getProjects(),
-  ]);
+      const task = await fetchTask(id);
+      if (!task) return null;
+
+      const [comments, files, activity, team, projects] = await Promise.all([
+        fetchComments(id),
+        fetchAttachments(id),
+        fetchActivity(id),
+        fetchTeam(),
+        fetchProjects(),
+      ]);
+
+      return { task, comments, files, activity, team, projects };
+    },
+    [id],
+  );
+
+  if (error) return <LoadError message={error} onRetry={refresh} />;
+  if (loading) return <PageSkeleton />;
+
+  if (!data) {
+    return (
+      <EmptyState
+        icon={SearchX}
+        title="No encontramos esta tarea"
+        hint="Puede que se haya borrado, o que no tengas permiso para verla. Si crees que deberías verla, pídele al administrador que te la asigne."
+        action={
+          <Button className="h-10" nativeButton={false} render={<Link href="/tablero" />}>
+            Ir al tablero
+          </Button>
+        }
+      />
+    );
+  }
+
+  const { task, comments, files, activity, team, projects } = data;
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -82,8 +99,8 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
           Volver al tablero
         </Button>
         <div className="flex items-center gap-1.5">
-          <EditTaskButton task={task} team={team} projects={projects} isAdmin={isAdmin} />
-          <TaskMenu task={task} isAdmin={isAdmin} />
+          <EditTaskButton task={task} team={team} projects={projects} onSaved={refresh} />
+          <TaskMenu task={task} isAdmin={isAdmin} onChanged={refresh} />
         </div>
       </div>
 
@@ -142,17 +159,11 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
           </header>
 
           <Panel title="Archivos">
-            <Attachments taskId={task.id} files={files} currentUserId={userId} isAdmin={isAdmin} />
+            <Attachments taskId={task.id} files={files} onChanged={refresh} />
           </Panel>
 
           <Panel title={`Comentarios${comments.length > 0 ? ` (${comments.length})` : ""}`}>
-            <Comments
-              taskId={task.id}
-              comments={comments}
-              team={team}
-              currentUserId={userId}
-              isAdmin={isAdmin}
-            />
+            <Comments taskId={task.id} comments={comments} team={team} onChanged={refresh} />
           </Panel>
         </div>
 
@@ -198,7 +209,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
             ) : (
               <ol className="relative space-y-3.5 pl-5">
                 {/* Connector line behind the dots */}
-                <span aria-hidden className="absolute left-[5px] top-1.5 bottom-1.5 w-px bg-border" />
+                <span aria-hidden className="absolute bottom-1.5 left-[5px] top-1.5 w-px bg-border" />
                 {activity.map((entry) => {
                   const who = team.find((member) => member.id === entry.actor_id);
                   return (
@@ -216,7 +227,8 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
                           : `Creada en ${STATUS_LABEL[entry.to_status]}`}
                       </p>
                       <p className="mt-0.5 text-[11px] text-muted-foreground">
-                        {who?.full_name || who?.username || "alguien"} · {formatDateTime(entry.created_at)}
+                        {who?.full_name || who?.username || "alguien"} ·{" "}
+                        {formatDateTime(entry.created_at)}
                       </p>
                     </li>
                   );
@@ -232,5 +244,13 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TaskPage() {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <TaskContent />
+    </Suspense>
   );
 }

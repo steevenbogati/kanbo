@@ -1,56 +1,62 @@
-import type { Metadata } from "next";
+"use client";
+
 import { CheckCircle2, PartyPopper, TriangleAlert } from "lucide-react";
 
-import { requireSession } from "@/lib/auth";
-import { getProjects, getTasks, getTeam } from "@/lib/queries";
+import { useAuth } from "@/components/auth-provider";
+import { fetchProjects, fetchTasks, fetchTeam } from "@/lib/data";
+import { useData } from "@/lib/use-data";
 import { sortTasks } from "@/lib/task-order";
 import { todayISO } from "@/lib/dates";
 import { PageHeader, SectionTitle } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
+import { LoadError, PageSkeleton } from "@/components/page-states";
 import { TaskCard } from "@/components/tasks/task-card";
 import { NewTaskButton } from "@/components/tasks/new-task-button";
 import type { Profile, Project, TaskOverview } from "@/lib/types/database";
 
-export const metadata: Metadata = { title: "Mi día" };
+export default function MyDayPage() {
+  const { userId, profile, isAdmin } = useAuth();
 
-function TaskGrid({
-  tasks,
-  team,
-  projects,
-  isAdmin,
-}: {
-  tasks: TaskOverview[];
-  team: Profile[];
-  projects: Project[];
-  isAdmin: boolean;
-}) {
-  return (
-    <div className="grid gap-2.5 lg:grid-cols-2 2xl:grid-cols-3">
-      {tasks.map((task) => (
-        <TaskCard key={task.id} task={task} team={team} projects={projects} isAdmin={isAdmin} />
-      ))}
-    </div>
+  const { data, loading, error, refresh } = useData(
+    async () => {
+      const [tasks, team, projects] = await Promise.all([
+        fetchTasks({ assignee: userId }),
+        fetchTeam(),
+        fetchProjects(),
+      ]);
+      return { tasks, team, projects };
+    },
+    [userId],
   );
-}
 
-export default async function MyDayPage() {
-  const { userId, profile, isAdmin } = await requireSession();
+  const firstName = profile.full_name.split(" ")[0] || profile.username;
 
-  const [tasks, team, projects] = await Promise.all([
-    getTasks({ assignee: userId }),
-    getTeam(),
-    getProjects(),
-  ]);
+  if (error) return <LoadError message={error} onRetry={refresh} />;
+  if (loading || !data) return <PageSkeleton title={`Hola, ${firstName}`} />;
 
-  const open = sortTasks(tasks.filter((task) => task.status !== "done"));
+  const open = sortTasks(data.tasks.filter((task) => task.status !== "done"));
   const today = todayISO();
-  const doneToday = tasks.filter(
+  const doneToday = data.tasks.filter(
     (task) => task.status === "done" && task.completed_at?.slice(0, 10) === today,
   );
 
   const overdue = open.filter((task) => task.is_overdue);
   const rest = open.filter((task) => !task.is_overdue);
-  const firstName = profile.full_name.split(" ")[0] || profile.username;
+
+  const grid = (tasks: TaskOverview[], team: Profile[], projects: Project[]) => (
+    <div className="grid gap-2.5 lg:grid-cols-2 2xl:grid-cols-3">
+      {tasks.map((task) => (
+        <TaskCard
+          key={task.id}
+          task={task}
+          team={team}
+          projects={projects}
+          isAdmin={isAdmin}
+          onChanged={refresh}
+        />
+      ))}
+    </div>
+  );
 
   return (
     <>
@@ -65,7 +71,7 @@ export default async function MyDayPage() {
                   : ""
               }`
         }
-        action={<NewTaskButton team={team} projects={projects} isAdmin={isAdmin} />}
+        action={<NewTaskButton team={data.team} projects={data.projects} onSaved={refresh} />}
       />
 
       <div className="space-y-7">
@@ -75,14 +81,14 @@ export default async function MyDayPage() {
               <TriangleAlert className="size-4" />
               Vencidas
             </SectionTitle>
-            <TaskGrid tasks={overdue} team={team} projects={projects} isAdmin={isAdmin} />
+            {grid(overdue, data.team, data.projects)}
           </section>
         )}
 
         {rest.length > 0 && (
           <section className="space-y-2.5">
             <SectionTitle count={rest.length}>Por prioridad y fecha</SectionTitle>
-            <TaskGrid tasks={rest} team={team} projects={projects} isAdmin={isAdmin} />
+            {grid(rest, data.team, data.projects)}
           </section>
         )}
 
@@ -100,7 +106,7 @@ export default async function MyDayPage() {
               <CheckCircle2 className="size-4" />
               Terminadas hoy
             </SectionTitle>
-            <TaskGrid tasks={doneToday} team={team} projects={projects} isAdmin={isAdmin} />
+            {grid(doneToday, data.team, data.projects)}
           </section>
         )}
       </div>

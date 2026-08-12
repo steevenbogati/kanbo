@@ -1,8 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
-import { useFormStatus } from "react-dom";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,57 +18,97 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, NativeSelect } from "@/components/field";
 import { PRIORITY_LABEL, RECURRENCE_LABEL, STATUS_LABEL, STATUS_ORDER } from "@/lib/labels";
-import { idleState } from "@/lib/action-state";
-import { createTask, updateTask } from "@/app/actions/tasks";
-import type { Profile, Project, TaskOverview } from "@/lib/types/database";
-
-function SaveButton({ isNew }: { isNew: boolean }) {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button type="submit" className="h-11 sm:h-10" disabled={pending}>
-      {pending && <Loader2 className="size-4 animate-spin" />}
-      {isNew ? "Crear tarea" : "Guardar cambios"}
-    </Button>
-  );
-}
+import { useAuth } from "@/components/auth-provider";
+import { createTask, updateTask, type TaskInput } from "@/lib/data";
+import type {
+  Profile,
+  Project,
+  RecurrenceKind,
+  TaskOverview,
+  TaskPriority,
+  TaskStatus,
+} from "@/lib/types/database";
 
 export function TaskDialog({
   task,
   team,
   projects,
-  isAdmin,
   trigger,
   defaultStatus,
   open: controlledOpen,
   onOpenChange,
+  onSaved,
 }: {
   task?: TaskOverview;
   team: Profile[];
   projects: Project[];
-  isAdmin: boolean;
   trigger?: React.ReactNode;
-  defaultStatus?: string;
+  defaultStatus?: TaskStatus;
   /** Optional: lets a parent (a menu item, for example) open the dialog. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  onSaved: () => void;
 }) {
+  const { userId, isAdmin } = useAuth();
   const isNew = !task;
+
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = onOpenChange ?? setUncontrolledOpen;
-  const [state, formAction] = useActionState(isNew ? createTask : updateTask, idleState);
-  const router = useRouter();
 
-  useEffect(() => {
-    if (state.ok) {
-      setOpen(false);
-      toast.success(isNew ? "Tarea creada" : "Cambios guardados");
-      router.refresh();
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+
+    const text = (key: string) => String(form.get(key) ?? "").trim();
+    const optional = (key: string) => text(key) || null;
+
+    const title = text("title");
+    if (!title) {
+      setError("La tarea necesita un título.");
+      return;
     }
-    // setOpen is stable in both the controlled and uncontrolled case.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, isNew, router]);
+
+    const externalUrl = optional("external_url");
+    if (externalUrl && !/^https?:\/\//i.test(externalUrl)) {
+      setError("El enlace debe empezar con http:// o https://");
+      return;
+    }
+
+    const input: TaskInput = {
+      title,
+      description: text("description"),
+      // A member can only work on their own tasks; only the admin picks people.
+      assignee_id: isAdmin ? optional("assignee_id") : (task?.assignee_id ?? userId),
+      project_id: optional("project_id"),
+      priority: text("priority") as TaskPriority,
+      status: text("status") as TaskStatus,
+      due_date: optional("due_date"),
+      external_url: externalUrl,
+      recurrence: text("recurrence") as RecurrenceKind,
+    };
+
+    setPending(true);
+    setError(null);
+
+    const result = task
+      ? await updateTask(task.id, isAdmin ? input : { ...input, assignee_id: task.assignee_id })
+      : await createTask(input, userId);
+
+    setPending(false);
+
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+
+    setOpen(false);
+    toast.success(isNew ? "Tarea creada" : "Cambios guardados");
+    onSaved();
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -78,7 +116,9 @@ export function TaskDialog({
 
       <DialogContent className="max-h-[92dvh] overflow-y-auto p-0 sm:max-w-[520px]">
         <DialogHeader className="border-b px-5 py-4">
-          <DialogTitle className="text-[17px]">{isNew ? "Nueva tarea" : "Editar tarea"}</DialogTitle>
+          <DialogTitle className="text-[17px]">
+            {isNew ? "Nueva tarea" : "Editar tarea"}
+          </DialogTitle>
           <DialogDescription>
             {isAdmin
               ? "Solo el título es obligatorio; el resto lo puedes completar después."
@@ -86,10 +126,8 @@ export function TaskDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form action={formAction}>
+        <form onSubmit={onSubmit}>
           <div className="space-y-5 px-5 py-5">
-            {task && <input type="hidden" name="id" value={task.id} />}
-
             <Field label="Título" htmlFor="title">
               <Input
                 id="title"
@@ -224,23 +262,28 @@ export function TaskDialog({
               />
             </Field>
 
-            {state.error && (
+            {error && (
               <p
                 role="alert"
                 aria-live="polite"
                 className="flex items-start gap-2 rounded-lg bg-high-soft px-3 py-2.5 text-sm text-high"
               >
                 <AlertCircle className="mt-0.5 size-4 shrink-0" />
-                {state.error}
+                {error}
               </p>
             )}
           </div>
 
           <DialogFooter className="mx-0 mb-0 rounded-b-xl px-5 py-4">
-            <DialogClose render={<Button type="button" variant="outline" className="h-11 sm:h-10" />}>
+            <DialogClose
+              render={<Button type="button" variant="outline" className="h-11 sm:h-10" />}
+            >
               Cancelar
             </DialogClose>
-            <SaveButton isNew={isNew} />
+            <Button type="submit" className="h-11 sm:h-10" disabled={pending}>
+              {pending && <Loader2 className="size-4 animate-spin" />}
+              {isNew ? "Crear tarea" : "Guardar cambios"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
