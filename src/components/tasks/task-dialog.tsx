@@ -122,7 +122,9 @@ export function TaskDialog({
           <DialogDescription>
             {isAdmin
               ? "Solo el título es obligatorio; el resto lo puedes completar después."
-              : "Puedes editar tu tarea. El responsable lo asigna el administrador."}
+              : isNew
+                ? "Queda a tu nombre: los miembros solo crean tareas para sí mismos."
+                : "Puedes editar tu tarea. El responsable lo asigna el administrador."}
           </DialogDescription>
         </DialogHeader>
 

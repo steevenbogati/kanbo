@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -83,12 +84,16 @@ export function TaskMenu({
         {onEdit && <DropdownMenuItem onClick={onEdit}>Editar</DropdownMenuItem>}
 
         <DropdownMenuSeparator />
-        <DropdownMenuLabel>Mover a</DropdownMenuLabel>
-        {STATUS_ORDER.filter((status) => status !== task.status).map((status) => (
-          <DropdownMenuItem key={status} onClick={() => void move(status)}>
-            {STATUS_LABEL[status]}
-          </DropdownMenuItem>
-        ))}
+
+        {/* The label has to live inside a group: on its own it throws. */}
+        <DropdownMenuGroup className="p-0">
+          <DropdownMenuLabel>Mover a</DropdownMenuLabel>
+          {STATUS_ORDER.filter((status) => status !== task.status).map((status) => (
+            <DropdownMenuItem key={status} onClick={() => void move(status)}>
+              {STATUS_LABEL[status]}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
 
         {isAdmin && (
           <>
