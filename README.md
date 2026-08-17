@@ -216,6 +216,9 @@ Nunca pegues un token de GitHub en un archivo del proyecto.
   `supabase/apply-all.sql`, copia el archivo completo y ejecútalo desde el inicio. Si ya
   quedó una ejecución a medias, ejecuta primero `supabase/repair-policies.sql` y luego
   vuelve a ejecutar `apply-all.sql` completo. Esto no borra información.
+- **Supabase muestra `cannot drop columns from view`**: usa la versión más reciente de
+  `supabase/apply-all.sql` y ejecútala completa desde el inicio. El archivo ahora
+  reconstruye las vistas antes de aplicar sus columnas nuevas.
 - **"Faltan NEXT_PUBLIC_SUPABASE_URL…"**: falta el `.env.local` en local, o las variables
   del repositorio si es la versión publicada.
 - **La publicación falla**: mira el error en la pestaña **Actions**. Casi siempre son las

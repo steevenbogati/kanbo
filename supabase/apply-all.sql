@@ -654,7 +654,11 @@ create policy "task_files_delete"
 -- security_invoker = true makes the views respect the caller's RLS policies,
 -- instead of running with the owner's privileges.
 
-create or replace view public.v_task_overview
+-- The later workspace migration adds columns to this view. Dropping it first
+-- keeps the complete migration bundle safe to run again.
+drop view if exists public.v_task_overview;
+
+create view public.v_task_overview
 with (security_invoker = true) as
 select
   t.id,
@@ -685,7 +689,9 @@ left join public.profiles a on a.id = t.assignee_id
 left join public.profiles c on c.id = t.created_by
 left join public.projects p on p.id = t.project_id;
 
-create or replace view public.v_workload_by_person
+drop view if exists public.v_workload_by_person;
+
+create view public.v_workload_by_person
 with (security_invoker = true) as
 select
   pr.id                                    as profile_id,
