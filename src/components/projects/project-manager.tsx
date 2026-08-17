@@ -32,6 +32,13 @@ function ProjectRow({
         <p className="truncate text-[12px] text-muted-foreground">
           {project.client_name || "Sin cliente"}
         </p>
+        {(project.budget_amount > 0 || project.hourly_rate > 0) && (
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {project.budget_amount > 0 ? `Presupuesto $${project.budget_amount.toFixed(2)}` : ""}
+            {project.budget_amount > 0 && project.hourly_rate > 0 ? " · " : ""}
+            {project.hourly_rate > 0 ? `$${project.hourly_rate.toFixed(2)}/h` : ""}
+          </p>
+        )}
       </div>
 
       <Button
@@ -67,6 +74,8 @@ export function ProjectManager({
       String(form.get("name") ?? ""),
       String(form.get("client_name") ?? ""),
       userId,
+      Number(form.get("budget_amount") ?? 0) || 0,
+      Number(form.get("hourly_rate") ?? 0) || 0,
     );
     setPending(false);
 
@@ -117,6 +126,14 @@ export function ProjectManager({
                 className="h-11 text-base"
                 maxLength={60}
               />
+            </Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Presupuesto" htmlFor="budget_amount" hint="Opcional, en dólares.">
+              <Input id="budget_amount" name="budget_amount" type="number" min="0" step="0.01" placeholder="0" className="h-11" />
+            </Field>
+            <Field label="Valor por hora" htmlFor="hourly_rate" hint="Opcional, en dólares.">
+              <Input id="hourly_rate" name="hourly_rate" type="number" min="0" step="0.01" placeholder="0" className="h-11" />
             </Field>
           </div>
           <div className="flex justify-end">

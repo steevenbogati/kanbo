@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, LogOut, Moon, Sun } from "lucide-react";
+import { ChevronsUpDown, LogOut, Moon, Settings, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabase/browser";
+import { Link } from "@/components/app-link";
 
 export function initials(name: string, fallback: string) {
   const source = name.trim() || fallback;
@@ -120,6 +121,11 @@ export function UserMenu({
         </div>
 
         <DropdownMenuSeparator />
+
+        <DropdownMenuItem render={<Link href="/cuenta" />}>
+          <Settings className="size-4" />
+          Mi cuenta y seguridad
+        </DropdownMenuItem>
 
         <DropdownMenuItem onClick={() => setTheme(isDark ? "light" : "dark")}>
           {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}

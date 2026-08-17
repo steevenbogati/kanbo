@@ -11,6 +11,8 @@ import { Logo, LogoMark } from "@/components/logo";
 import { SearchBox } from "@/components/search-box";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
+import { NotificationsBell } from "@/components/notifications-bell";
+import { RealtimeSync } from "@/components/realtime-sync";
 import { cn } from "@/lib/utils";
 
 /** The two views everyone lives in, as tabs at the top. */
@@ -26,6 +28,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-dvh px-0 py-0 md:px-6 md:py-6 lg:px-8 lg:py-8">
+      <RealtimeSync />
       {/* The app sits on the canvas as one big rounded panel. */}
       <div className="mx-auto flex w-full max-w-[1560px] overflow-hidden bg-card/55 backdrop-blur-xl md:min-h-[calc(100dvh-3rem)] md:rounded-[28px] md:shadow-shell md:ring-1 md:ring-white/60 dark:md:ring-white/10 lg:min-h-[calc(100dvh-4rem)]">
         {/* Sidebar */}
@@ -83,6 +86,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
             <div className="ml-auto flex items-center gap-2">
               <SearchBox className="hidden w-[240px] lg:block" />
+              <NotificationsBell />
               <ThemeToggle />
               <span className="md:hidden">
                 <UserMenu

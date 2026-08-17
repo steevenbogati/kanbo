@@ -48,5 +48,13 @@ export function useData<T>(
     };
   }, [key, version]);
 
+  // Supabase Realtime tells every open screen to reload its own query. This
+  // keeps the hook generic: boards, lists and detail screens all stay current.
+  useEffect(() => {
+    const refreshFromWorkspace = () => setVersion((current) => current + 1);
+    window.addEventListener("kanbo:refresh", refreshFromWorkspace);
+    return () => window.removeEventListener("kanbo:refresh", refreshFromWorkspace);
+  }, []);
+
   return { ...state, refresh: () => setVersion((current) => current + 1) };
 }

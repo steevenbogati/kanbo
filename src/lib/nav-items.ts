@@ -2,7 +2,7 @@
  * Navigation entries, split in two groups the way the sidebar shows them.
  * Kept out of nav.tsx (a client component) so anything can build the list.
  */
-export type NavIcon = "mi-dia" | "tablero" | "lista" | "panel" | "proyectos" | "salir";
+export type NavIcon = "mi-dia" | "tablero" | "lista" | "calendario" | "panel" | "proyectos" | "plantillas" | "equipo" | "salir";
 
 export type NavItem = {
   href: string;
@@ -19,6 +19,7 @@ export function navGroups(isAdmin: boolean): NavGroup[] {
     { href: "/mi-dia", label: "Mi día", icon: "mi-dia" },
     { href: "/tablero", label: "Tablero", icon: "tablero" },
     { href: "/lista", label: "Todas las tareas", short: "Tareas", icon: "lista" },
+    { href: "/calendario", label: "Calendario", icon: "calendario" },
   ];
 
   const groups: NavGroup[] = [{ title: "Trabajo", items: trabajo }];
@@ -29,6 +30,8 @@ export function navGroups(isAdmin: boolean): NavGroup[] {
       items: [
         { href: "/panel", label: "Panel", icon: "panel" },
         { href: "/proyectos", label: "Proyectos", icon: "proyectos" },
+        { href: "/plantillas", label: "Plantillas", icon: "plantillas" },
+        { href: "/equipo", label: "Equipo", icon: "equipo" },
       ],
     });
   }
@@ -38,5 +41,7 @@ export function navGroups(isAdmin: boolean): NavGroup[] {
 
 /** The bottom bar on phones: never more than five, so labels stay readable. */
 export function navItems(isAdmin: boolean): NavItem[] {
-  return navGroups(isAdmin).flatMap((group) => group.items);
+  const items = navGroups(isAdmin).flatMap((group) => group.items);
+  // Keep the phone bar calm. The full sidebar still exposes administration.
+  return isAdmin ? items.filter((item) => ["/mi-dia", "/tablero", "/lista", "/calendario", "/panel"].includes(item.href)) : items;
 }

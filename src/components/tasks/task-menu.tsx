@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { MoreHorizontal } from "lucide-react";
+import { Copy, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { STATUS_LABEL, STATUS_ORDER } from "@/lib/labels";
-import { deleteTask, moveTask } from "@/lib/data";
+import { deleteTask, duplicateTask, moveTask } from "@/lib/data";
+import { useAuth } from "@/components/auth-provider";
 import type { TaskOverview, TaskStatus } from "@/lib/types/database";
 
 /**
@@ -34,6 +35,7 @@ export function TaskMenu({
   onEdit?: () => void;
   onChanged: () => void;
 }) {
+  const { userId } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [pending, setPending] = useState(false);
@@ -66,6 +68,17 @@ export function TaskMenu({
     }
   }
 
+  async function duplicate() {
+    setPending(true);
+    const result = await duplicateTask(task.id, userId, isAdmin);
+    setPending(false);
+    if (result.error) toast.error(result.error);
+    else {
+      toast.success("Tarea duplicada");
+      onChanged();
+    }
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -82,6 +95,10 @@ export function TaskMenu({
           </DropdownMenuItem>
         )}
         {onEdit && <DropdownMenuItem onClick={onEdit}>Editar</DropdownMenuItem>}
+        <DropdownMenuItem onClick={() => void duplicate()}>
+          <Copy className="size-3.5" />
+          Duplicar
+        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 

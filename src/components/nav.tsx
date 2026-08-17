@@ -3,11 +3,14 @@
 import { usePathname } from "next/navigation";
 import {
   CalendarCheck,
+  CalendarDays,
+  ClipboardList,
   FolderOpen,
   KanbanSquare,
   LayoutDashboard,
   ListChecks,
   LogOut,
+  UsersRound,
 } from "lucide-react";
 
 import { Link } from "@/components/app-link";
@@ -18,8 +21,11 @@ const ICONS: Record<NavIcon, typeof ListChecks> = {
   "mi-dia": CalendarCheck,
   tablero: KanbanSquare,
   lista: ListChecks,
+  calendario: CalendarDays,
   panel: LayoutDashboard,
   proyectos: FolderOpen,
+  plantillas: ClipboardList,
+  equipo: UsersRound,
   salir: LogOut,
 };
 

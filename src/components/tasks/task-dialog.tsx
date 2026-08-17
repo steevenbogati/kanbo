@@ -89,6 +89,7 @@ export function TaskDialog({
       due_date: optional("due_date"),
       external_url: externalUrl,
       recurrence: text("recurrence") as RecurrenceKind,
+      estimated_hours: Number(text("estimated_hours") || 0),
     };
 
     setPending(true);
@@ -224,6 +225,19 @@ export function TaskDialog({
                     name="due_date"
                     type="date"
                     defaultValue={task?.due_date ?? ""}
+                    className="h-11"
+                  />
+                </Field>
+
+                <Field label="Horas estimadas" htmlFor="estimated_hours" hint="Opcional. Sirve para medir carga y costo.">
+                  <Input
+                    id="estimated_hours"
+                    name="estimated_hours"
+                    type="number"
+                    min="0"
+                    max="9999"
+                    step="0.25"
+                    defaultValue={task?.estimated_hours ?? 0}
                     className="h-11"
                   />
                 </Field>

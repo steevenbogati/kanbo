@@ -10,6 +10,7 @@ type AuthState = {
   userId: string;
   profile: Profile;
   isAdmin: boolean;
+  mfaRequired: boolean;
 };
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -34,7 +35,13 @@ async function readSession(): Promise<AuthState | null> {
     return null;
   }
 
-  return { userId: session.user.id, profile, isAdmin: profile.role === "admin" };
+  const { data: assurance } = await supabase().auth.mfa.getAuthenticatorAssuranceLevel();
+  return {
+    userId: session.user.id,
+    profile,
+    isAdmin: profile.role === "admin",
+    mfaRequired: assurance?.currentLevel === "aal1" && assurance.nextLevel === "aal2",
+  };
 }
 
 /**
@@ -86,6 +93,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const next = `${pathname}${window.location.search}`;
     router.replace(`/login?redirect=${encodeURIComponent(next)}`);
   }, [state, pathname, router]);
+
+  useEffect(() => {
+    if (state.auth?.mfaRequired && pathname !== "/cuenta") router.replace("/cuenta");
+  }, [state.auth?.mfaRequired, pathname, router]);
 
   if (!state.auth) {
     return (

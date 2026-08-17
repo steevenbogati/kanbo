@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "@/components/app-link";
-import { ArrowRight, CalendarClock, CheckCircle2, Inbox, TriangleAlert, Users } from "lucide-react";
+import { ArrowRight, CalendarClock, CheckCircle2, Download, Inbox, TriangleAlert, Users } from "lucide-react";
 
 import { AdminOnly } from "@/components/auth-provider";
 import { fetchTasks, fetchWorkload } from "@/lib/data";
@@ -13,6 +13,8 @@ import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { LoadError, PageSkeleton } from "@/components/page-states";
 import { Avatar } from "@/components/user-menu";
+import { Button } from "@/components/ui/button";
+import { downloadTasksCsv } from "@/lib/export";
 
 /**
  * Stat tile: label, value, and an optional note. The value keeps proportional
@@ -103,12 +105,32 @@ function DashboardContent() {
   }));
 
   const busiest = Math.max(1, ...data.workload.map((person) => person.open_tasks));
+  const projectRows = [...new Map(
+    data.tasks
+      .filter((task) => task.project_id)
+      .map((task) => [task.project_id, task] as const),
+  ).values()].map((sample) => {
+    const projectTasks = data.tasks.filter((task) => task.project_id === sample.project_id);
+    const hours = projectTasks.reduce((sum, task) => sum + (task.estimated_hours ?? 0), 0);
+    return {
+      id: sample.project_id,
+      name: sample.project_name ?? "Proyecto",
+      hours,
+      cost: hours * (sample.hourly_rate ?? 0),
+      budget: sample.budget_amount ?? 0,
+    };
+  });
 
   return (
     <>
       <PageHeader eyebrow="Administración" title="Panel" subtitle="Cómo va el equipo ahora mismo." />
 
       <div className="space-y-6">
+        <div className="flex justify-end">
+          <Button variant="outline" className="h-9" onClick={() => downloadTasksCsv(data.tasks)}>
+            <Download className="size-3.5" /> Exportar CSV
+          </Button>
+        </div>
         <section aria-label="Resumen" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <Stat label="Tareas abiertas" value={open.length} icon={Inbox} />
           <Stat
@@ -251,6 +273,21 @@ function DashboardContent() {
             </section>
           </div>
         </div>
+        <section className="rounded-xl border bg-card shadow-xs">
+          <header className="border-b px-4 py-3">
+            <h2 className="text-[13px] font-semibold tracking-tight">Rentabilidad estimada por proyecto</h2>
+          </header>
+          <div className="overflow-x-auto p-4">
+            {projectRows.length === 0 ? (
+              <p className="text-[13px] text-muted-foreground">Asigna tareas a proyectos para ver esta lectura.</p>
+            ) : (
+              <table className="w-full min-w-[520px] text-left text-[12px]">
+                <thead className="text-muted-foreground"><tr><th className="pb-2 font-medium">Proyecto</th><th className="pb-2 font-medium">Horas</th><th className="pb-2 font-medium">Costo estimado</th><th className="pb-2 font-medium">Presupuesto</th></tr></thead>
+                <tbody className="divide-y">{projectRows.map((row) => <tr key={row.id}><td className="py-2 font-medium">{row.name}</td><td className="nums py-2">{row.hours.toFixed(2)} h</td><td className="nums py-2">${row.cost.toFixed(2)}</td><td className="nums py-2">{row.budget > 0 ? `$${row.budget.toFixed(2)}` : "-"}</td></tr>)}</tbody>
+              </table>
+            )}
+          </div>
+        </section>
       </div>
     </>
   );

@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { ArrowLeft, ExternalLink, History, SearchX } from "lucide-react";
 
 import { useAuth } from "@/components/auth-provider";
-import { fetchActivity, fetchAttachments, fetchComments, fetchProjects, fetchTask, fetchTeam } from "@/lib/data";
+import { fetchActivity, fetchAttachments, fetchComments, fetchProjects, fetchTask, fetchTasks, fetchTeam } from "@/lib/data";
 import { useData } from "@/lib/use-data";
 import { formatDate, formatDateTime, formatDays } from "@/lib/dates";
 import {
@@ -25,6 +25,7 @@ import { Attachments } from "@/components/tasks/attachments";
 import { Comments } from "@/components/tasks/comments";
 import { TaskMenu } from "@/components/tasks/task-menu";
 import { EditTaskButton } from "@/components/tasks/edit-task-button";
+import { TaskTools } from "@/components/tasks/task-tools";
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -58,15 +59,16 @@ function TaskContent() {
       const task = await fetchTask(id);
       if (!task) return null;
 
-      const [comments, files, activity, team, projects] = await Promise.all([
+      const [comments, files, activity, team, projects, availableTasks] = await Promise.all([
         fetchComments(id),
         fetchAttachments(id),
         fetchActivity(id),
         fetchTeam(),
         fetchProjects(),
+        fetchTasks(),
       ]);
 
-      return { task, comments, files, activity, team, projects };
+      return { task, comments, files, activity, team, projects, availableTasks };
     },
     [id],
   );
@@ -89,7 +91,7 @@ function TaskContent() {
     );
   }
 
-  const { task, comments, files, activity, team, projects } = data;
+  const { task, comments, files, activity, team, projects, availableTasks } = data;
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -165,6 +167,8 @@ function TaskContent() {
           <Panel title={`Comentarios${comments.length > 0 ? ` (${comments.length})` : ""}`}>
             <Comments taskId={task.id} comments={comments} team={team} onChanged={refresh} />
           </Panel>
+
+          <TaskTools task={task} availableTasks={availableTasks} onChanged={refresh} />
         </div>
 
         {/* Side column */}
