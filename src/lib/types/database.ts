@@ -24,6 +24,8 @@ export type Project = {
   name: string;
   client_name: string;
   is_archived: boolean;
+  budget_amount: number;
+  hourly_rate: number;
   created_by: string | null;
   created_at: string;
 };
@@ -44,6 +46,7 @@ export type Task = {
   started_at: string | null;
   completed_at: string | null;
   duration_days: number | null;
+  estimated_hours: number;
   assignment_notified_at: string | null;
   due_notified_on: string | null;
   created_by: string;
@@ -79,6 +82,57 @@ export type TaskActivity = {
   created_at: string;
 };
 
+export type TaskChecklistItem = {
+  id: string;
+  task_id: string;
+  label: string;
+  is_done: boolean;
+  position: number;
+  created_by: string;
+  created_at: string;
+};
+
+export type TaskTimeEntry = {
+  id: string;
+  task_id: string;
+  user_id: string;
+  started_at: string;
+  stopped_at: string | null;
+  note: string;
+  created_at: string;
+};
+
+export type TaskDependency = {
+  task_id: string;
+  depends_on_id: string;
+  created_by: string;
+  created_at: string;
+};
+
+export type Notification = {
+  id: string;
+  user_id: string;
+  task_id: string | null;
+  kind: "assigned" | "comment" | "status" | "due";
+  title: string;
+  body: string;
+  read_at: string | null;
+  created_at: string;
+};
+
+export type TaskTemplate = {
+  id: string;
+  name: string;
+  title: string;
+  description: string;
+  priority: TaskPriority;
+  project_id: string | null;
+  recurrence: RecurrenceKind;
+  estimated_hours: number;
+  created_by: string;
+  created_at: string;
+};
+
 export type TaskOverview = Omit<
   Task,
   "assignment_notified_at" | "due_notified_on" | "recurrence_parent_id"
@@ -86,6 +140,8 @@ export type TaskOverview = Omit<
   assignee_name: string | null;
   project_name: string | null;
   client_name: string | null;
+  budget_amount: number;
+  hourly_rate: number;
   created_by_name: string | null;
   is_overdue: boolean;
   is_due_today: boolean;
@@ -131,12 +187,19 @@ export type Database = {
         }
       >;
       task_activity: Table<TaskActivity>;
+      task_checklist: Table<TaskChecklistItem>;
+      task_time_entries: Table<TaskTimeEntry>;
+      task_dependencies: Table<TaskDependency>;
+      notifications: Table<Notification>;
+      task_templates: Table<TaskTemplate>;
     };
     Views: {
       v_task_overview: { Row: TaskOverview; Relationships: [] };
       v_workload_by_person: { Row: WorkloadByPerson; Relationships: [] };
     };
-    Functions: Record<string, never>;
+    Functions: {
+      prepare_due_notifications: { Args: Record<string, never>; Returns: undefined };
+    };
     Enums: {
       user_role: UserRole;
       task_priority: TaskPriority;
