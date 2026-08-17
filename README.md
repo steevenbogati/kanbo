@@ -212,6 +212,10 @@ Nunca pegues un token de GitHub en un archivo del proyecto.
   exista, en Supabase → **Table editor** → tabla `profiles`, columna `username`.
 - **La app carga pero no aparece ninguna tarea**: revisa que corriste el SQL de
   `supabase/apply-all.sql`.
+- **Supabase muestra `policy already exists`**: descarga la versión más reciente de
+  `supabase/apply-all.sql`, copia el archivo completo y ejecútalo desde el inicio. Si ya
+  quedó una ejecución a medias, ejecuta primero `supabase/repair-policies.sql` y luego
+  vuelve a ejecutar `apply-all.sql` completo. Esto no borra información.
 - **"Faltan NEXT_PUBLIC_SUPABASE_URL…"**: falta el `.env.local` en local, o las variables
   del repositorio si es la versión publicada.
 - **La publicación falla**: mira el error en la pestaña **Actions**. Casi siempre son las

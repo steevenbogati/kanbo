@@ -5,6 +5,19 @@
 -- Se puede volver a ejecutar sin romper nada.
 -- ============================================================
 
+-- ===== Reparación previa de una ejecución incompleta =====
+-- Si una ejecución anterior se detuvo a mitad de las políticas de comentarios,
+-- las quitamos antes de que 0005_task_children.sql las vuelva a crear.
+do $$
+begin
+  if to_regclass('public.task_comments') is not null then
+    execute 'drop policy if exists "comments_select" on public.task_comments';
+    execute 'drop policy if exists "comments_insert" on public.task_comments';
+    execute 'drop policy if exists "comments_update_author" on public.task_comments';
+    execute 'drop policy if exists "comments_delete_author_or_admin" on public.task_comments';
+  end if;
+end $$;
+
 -- ===== 0001_extensions_and_enums.sql =====
 
 -- 0001 — Extensions and enum types
