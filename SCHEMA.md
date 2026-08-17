@@ -1,7 +1,7 @@
-# Esquema de base de datos (Fase 0 — para tu aprobación)
+# Esquema de base de datos (actualizado para la v2)
 
 Explicado en simple, con el detalle técnico abajo. Nada de esto está creado todavía:
-primero lo apruebas, después lo escribo como migraciones SQL en `/supabase/migrations`.
+El esquema está versionado en `/supabase/migrations` y se aplica desde `supabase/apply-all.sql`.
 
 ---
 
@@ -237,6 +237,7 @@ supabase/migrations/
   0009_username_login.sql        (usuario para entrar, en vez del correo)
   0010_guard_allows_service_role.sql  (el candado del perfil no bloquea al servidor)
   0011_contact_email.sql         (separa el correo de entrada del correo de contacto)
+  0012_v2_workspace.sql          (checklist, horas, bloqueos, avisos, plantillas, presupuesto y tiempo real)
 ```
 
 ## 8. Cómo funciona entrar con usuario
@@ -292,3 +293,16 @@ Solo esto (lo demás lo resuelvo yo):
 
 Con el punto 1 y 2 ya puedo empezar a construir; los puntos 3 a 6 los necesito antes de
 poder probar contra la base real y desplegar.
+
+`0012_v2_workspace.sql` agrega estas tablas, todas con RLS:
+
+- `task_checklist`: pasos de una tarea, orden y estado completado.
+- `task_time_entries`: intervalos reales iniciados y detenidos por cada persona.
+- `task_dependencies`: tareas que bloquean a otra, solo entre tareas visibles.
+- `notifications`: avisos internos dirigidos a un usuario; solo sus destinatarios los leen.
+- `task_templates`: plantillas administradas por el admin.
+
+También añade `estimated_hours` a `tasks`, `budget_amount` y `hourly_rate` a `projects`,
+triggers para avisos de asignación, comentarios, entregas y vencimientos, y suscripciones a
+la publicación `supabase_realtime`. El navegador usa únicamente la clave publicable; la clave
+secreta sigue fuera del repositorio.

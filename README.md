@@ -233,3 +233,13 @@ Next.js (App Router) exportado como sitio estático, con TypeScript, Tailwind y 
 Supabase para base de datos, cuentas y archivos, con Row Level Security activada en todas
 las tablas. Los correos los envía una tarea programada de GitHub Actions. No hay servidor
 propio ni piezas extra que mantener.
+La versión actual también incluye sincronización en tiempo real, campanita de avisos,
+checklist por tarea, contador de horas reales, bloqueos, duplicado y acciones masivas,
+calendario mensual, plantillas, gestión del equipo, exportación CSV, presupuesto y valor por
+hora por proyecto, verificación en dos pasos y botones directos para Google Calendar y
+WhatsApp.
+
+Drive, Figma y GitHub se manejan con el enlace externo de cada tarea. Una integración OAuth
+completa con Drive, Slack o GitHub requiere un servidor o una función segura; no se activa en
+el navegador porque expondría claves. Crear cuentas nuevas sigue usando `npm run crear-usuario`
+para que las contraseñas no pasen por el navegador.
